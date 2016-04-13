@@ -5,9 +5,9 @@ package api
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
+	"github.com/dotcominternet/platform/utils"
 	"net/http"
 	"testing"
 	"time"

@@ -13,8 +13,8 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 
-	"github.com/mattermost/platform/einterfaces"
-	"github.com/mattermost/platform/model"
+	"github.com/dotcominternet/platform/einterfaces"
+	"github.com/dotcominternet/platform/model"
 )
 
 const (

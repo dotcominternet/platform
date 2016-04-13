@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/utils"
 	"testing"
 )
 

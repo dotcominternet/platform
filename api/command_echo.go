@@ -9,7 +9,7 @@ import (
 	"time"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/model"
+	"github.com/dotcominternet/platform/model"
 )
 
 var echoSem chan bool

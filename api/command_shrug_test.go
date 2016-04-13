@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
 )
 
 func TestShrugCommand(t *testing.T) {

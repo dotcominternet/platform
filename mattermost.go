@@ -18,15 +18,15 @@ import (
 	"time"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/api"
-	"github.com/mattermost/platform/einterfaces"
-	"github.com/mattermost/platform/manualtesting"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
-	"github.com/mattermost/platform/web"
+	"github.com/dotcominternet/platform/api"
+	"github.com/dotcominternet/platform/einterfaces"
+	"github.com/dotcominternet/platform/manualtesting"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
+	"github.com/dotcominternet/platform/web"
 
 	// Plugins
-	_ "github.com/mattermost/platform/model/gitlab"
+	_ "github.com/dotcominternet/platform/model/gitlab"
 
 	// Enterprise Deps
 	_ "github.com/dgryski/dgoogauth"

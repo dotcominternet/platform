@@ -5,8 +5,8 @@ package oauthgitlab
 
 import (
 	"encoding/json"
-	"github.com/mattermost/platform/einterfaces"
-	"github.com/mattermost/platform/model"
+	"github.com/dotcominternet/platform/einterfaces"
+	"github.com/dotcominternet/platform/model"
 	"io"
 	"strconv"
 	"strings"

@@ -6,8 +6,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 
 	_ "github.com/cloudfoundry/jibber_jabber"
 	_ "github.com/nicksnyder/go-i18n/i18n"

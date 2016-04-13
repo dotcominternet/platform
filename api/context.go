@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
+	"github.com/dotcominternet/platform/utils"
 	goi18n "github.com/nicksnyder/go-i18n/i18n"
 )
 

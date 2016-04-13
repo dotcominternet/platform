@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/mattermost/platform/model"
+	"github.com/dotcominternet/platform/model"
 )
 
 type JoinProvider struct {

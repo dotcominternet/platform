@@ -26,8 +26,8 @@ import (
 	"github.com/go-gorp/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 )
 
 const (

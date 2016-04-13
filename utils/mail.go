@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/model"
+	"github.com/dotcominternet/platform/model"
 	"net"
 	"net/mail"
 	"net/smtp"

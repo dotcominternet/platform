@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 )
 
 var store Store

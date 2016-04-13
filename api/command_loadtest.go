@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 )
 
 var usage = `Mattermost load testing commands to help configure the system
@@ -296,7 +296,7 @@ func (me *LoadTestProvider) UrlCommand(c *Context, channelId string, message str
 
 	// provide a shortcut to easily access tests stored in doc/developer/tests
 	if !strings.HasPrefix(url, "http") {
-		url = "https://raw.githubusercontent.com/mattermost/platform/master/tests/" + url
+		url = "https://raw.githubusercontent.com/dotcominternet/platform/master/tests/" + url
 
 		if path.Ext(url) == "" {
 			url += ".md"
@@ -345,7 +345,7 @@ func (me *LoadTestProvider) JsonCommand(c *Context, channelId string, message st
 
 	// provide a shortcut to easily access tests stored in doc/developer/tests
 	if !strings.HasPrefix(url, "http") {
-		url = "https://raw.githubusercontent.com/mattermost/platform/master/tests/" + url
+		url = "https://raw.githubusercontent.com/dotcominternet/platform/master/tests/" + url
 
 		if path.Ext(url) == "" {
 			url += ".json"

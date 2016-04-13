@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/platform/api"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/api"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
+	"github.com/dotcominternet/platform/utils"
 )
 
 var ApiClient *model.Client

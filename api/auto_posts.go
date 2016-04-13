@@ -5,8 +5,8 @@ package api
 
 import (
 	"bytes"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 	"io"
 	"mime/multipart"
 	"os"

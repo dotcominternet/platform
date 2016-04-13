@@ -5,8 +5,8 @@ package api
 
 import (
 	"fmt"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 	"net/url"
 	"testing"
 	"time"

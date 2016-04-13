@@ -10,9 +10,9 @@ import (
 	"github.com/NYTimes/gziphandler"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/mattermost/platform/api"
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/api"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 	"github.com/mssola/user_agent"
 )
 

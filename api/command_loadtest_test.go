@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
-	"github.com/mattermost/platform/utils"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
+	"github.com/dotcominternet/platform/utils"
 )
 
 func TestLoadTestHelpCommands(t *testing.T) {
@@ -196,7 +196,7 @@ func TestLoadTestUrlCommands(t *testing.T) {
 		t.Fatal("/loadtest url with invalid url should've failed")
 	}
 
-	command = "/loadtest url https://raw.githubusercontent.com/mattermost/platform/master/README.md"
+	command = "/loadtest url https://raw.githubusercontent.com/dotcominternet/platform/master/README.md"
 	if r := Client.Must(Client.Command(channel.Id, command, false)).Data.(*model.CommandResponse); r.Text != "Loading data..." {
 		t.Fatal("/loadtest url for README.md should've executed")
 	}

@@ -4,8 +4,8 @@
 package api
 
 import (
-	"github.com/mattermost/platform/model"
-	"github.com/mattermost/platform/store"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
 	"testing"
 )
 
