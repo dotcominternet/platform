@@ -31,10 +31,10 @@ GOPATH ?= $(GOPATH:)
 GOFLAGS ?= $(GOFLAGS:)
 GO=$(GOPATH)/bin/godep go
 GO_LINKER_FLAGS ?= -ldflags \
-				   "-X github.com/mattermost/platform/model.BuildNumber=$(BUILD_NUMBER)\
-				    -X 'github.com/mattermost/platform/model.BuildDate=$(BUILD_DATE)'\
-				    -X github.com/mattermost/platform/model.BuildHash=$(BUILD_HASH)\
-				    -X github.com/mattermost/platform/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)"
+				   "-X github.com/dotcominternet/platform/model.BuildNumber=$(BUILD_NUMBER)\
+				    -X 'github.com/dotcominternet/platform/model.BuildDate=$(BUILD_DATE)'\
+				    -X github.com/dotcominternet/platform/model.BuildHash=$(BUILD_HASH)\
+				    -X github.com/dotcominternet/platform/model.BuildEnterpriseReady=$(BUILD_ENTERPRISE_READY)"
 
 # Output paths
 DIST_ROOT=dist
