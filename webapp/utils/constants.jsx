@@ -28,6 +28,7 @@ import githubIcon from 'images/themes/code_themes/github.png';
 import monokaiCSS from '!!file?name=files/code_themes/[hash].[ext]!highlight.js/styles/monokai.css';
 import monokaiIcon from 'images/themes/code_themes/monokai.png';
 
+import ladbrokesThemeImage from 'images/themes/ladbrokes.png';
 import defaultThemeImage from 'images/themes/organization.png';
 import mattermostDarkThemeImage from 'images/themes/mattermost_dark.png';
 import mattermostThemeImage from 'images/themes/mattermost.png';
@@ -263,6 +264,31 @@ export default {
     UPDATE_TYPING_MS: 5000,
     THEMES: {
         default: {
+            type: 'Ladbrokes',
+            awayIndicator: '#DCBD4E',
+            buttonBg: '#dd2200',
+            buttonColor: '#ffffff',
+            centerChannelBg: '#f2f4f8',
+            centerChannelColor: '#333333',
+            codeTheme: 'github',
+            linkColor: '#ff2700',
+            mentionBj: '#FBFBFB',
+            mentionColor: '#2071A7',
+            mentionHighlightBg: '#fff2bb',
+            mentionHighlightLink: '#2f81b7',
+            newMessageSeparator: '#FF8800',
+            onlineIndicator: '#7DBE00',
+            sidebarBg: '#8f1600',
+            sidebarHeaderBg: '#dd2200',
+            sidebarHeaderTextColor: '#e0e0e0',
+            sidebarText: '#ffffff',
+            sidebarTextActiveBorder: '#dd6d58',
+            sidebarTextActiveColor: '#ffffff',
+            sidebarTextHoverBg: '#dd2200',
+            sidebarUnreadText: '#ffffff',
+            image: ladbrokesThemeImage
+        },
+        organization: {
             type: 'Organization',
             sidebarBg: '#2071a7',
             sidebarText: '#fff',

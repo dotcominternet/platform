@@ -1,11 +1,20 @@
 @charset 'UTF-8';
 
+$border: hsla(0, 0%, 20%, 0.6);
+$brightness: 0.35;
+
 body .app__content .post .post__content .post__body {
   &.post__class__action {
-    background: rgba(0, 100, 180, 0.07);
+    background: rgba(0, 100, 180, $brightness);
+    border-color: $border;
 
     em {
-      color: #999999;
+      margin-left: -1.6em;
+      font-style: oblique;
+      font-weight: 700;
+    }
+    em:before {
+      content: "＊ ";
     }
 
     span.mention--highlight {
@@ -14,43 +23,53 @@ body .app__content .post .post__content .post__body {
   }
 
   &.post__class__red {
-    background: rgba(255,15,0, 0.07);
+    background: rgba(255,15,0, $brightness);
+    border-color: $border;
   }
 
   &.post__class__orange {
-    background: rgba(255, 98, 0, 0.07);
+    background: rgba(255, 98, 0, $brightness);
+    border-color: $border;
   }
 
   &.post__class__yellow {
-    background: rgba(255, 225, 0, 0.07);
+    background: rgba(255, 225, 0, $brightness);
+    border-color: $border;
   }
 
   &.post__class__green {
-    background: rgba(166, 255, 0, 0.07);
+    background: rgba(166, 255, 0, $brightness);
+    border-color: $border;
   }
 
   &.post__class__aqua {
-    background: rgba(0, 255, 195, 0.07);
+    background: rgba(0, 255, 195, $brightness);
+    border-color: $border;
   }
 
   &.post__class__blue {
-    background: rgba(0, 208, 255, 0.07);
+    background: rgba(0, 208, 255, $brightness);
+    border-color: $border;
   }
 
   &.post__class__navy {
-    background: rgba(0, 15, 255, 0.07);
+    background: rgba(0, 15, 255, $brightness);
+    border-color: $border;
   }
 
   &.post__class__purple {
-    background: rgba(136, 0, 255, 0.07);
+    background: rgba(136, 0, 255, $brightness);
+    border-color: $border;
   }
 
   &.post__class__mauve {
-    background: rgba(225, 0, 255, 0.07);
+    background: rgba(225, 0, 255, $brightness);
+    border-color: $border;
   }
 
   &.post__class__grey {
-    background: rgba(128, 128, 128, 0.07);
+    background: rgba(128, 128, 128, $brightness);
+    border-color: $border;
   }
 
 }
