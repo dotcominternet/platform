@@ -33,5 +33,27 @@ func (me *MeProvider) GetCommand(c *Context) *model.Command {
 }
 
 func (me *MeProvider) DoCommand(c *Context, channelId string, message string) *model.CommandResponse {
-	return &model.CommandResponse{ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL, Text: "*" + message + "*"}
+	userChan := Srv.Store.User().Get(c.Session.UserId)
+	var user *model.User
+	if ur := <-userChan; ur.Err != nil {
+		c.Err = ur.Err
+		return nil
+	} else {
+		user = ur.Data.(*model.User)
+	}
+
+	var name = user.Username
+	if len(user.Nickname) > 0 {
+		name = user.Nickname
+	} else if len(user.FirstName) > 0 {
+		name = user.FirstName
+	}
+
+	return &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
+		Text: "*" + name + " " + message + "*",
+		Props: model.StringInterface{
+			"class": "action",
+		},
+	}
 }
