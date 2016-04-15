@@ -1,0 +1,56 @@
+@charset 'UTF-8';
+
+body .app__content .post .post__content .post__body {
+  &.post__class__action {
+    background: rgba(0, 100, 180, 0.07);
+
+    em {
+      color: #999999;
+    }
+
+    span.mention--highlight {
+      background: transparent;
+    }
+  }
+
+  &.post__class__red {
+    background: rgba(255,15,0, 0.07);
+  }
+
+  &.post__class__orange {
+    background: rgba(255, 98, 0, 0.07);
+  }
+
+  &.post__class__yellow {
+    background: rgba(255, 225, 0, 0.07);
+  }
+
+  &.post__class__green {
+    background: rgba(166, 255, 0, 0.07);
+  }
+
+  &.post__class__aqua {
+    background: rgba(0, 255, 195, 0.07);
+  }
+
+  &.post__class__blue {
+    background: rgba(0, 208, 255, 0.07);
+  }
+
+  &.post__class__navy {
+    background: rgba(0, 15, 255, 0.07);
+  }
+
+  &.post__class__purple {
+    background: rgba(136, 0, 255, 0.07);
+  }
+
+  &.post__class__mauve {
+    background: rgba(225, 0, 255, 0.07);
+  }
+
+  &.post__class__grey {
+    background: rgba(128, 128, 128, 0.07);
+  }
+
+}

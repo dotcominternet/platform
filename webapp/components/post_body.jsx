@@ -192,10 +192,15 @@ class PostBody extends React.Component {
             );
         }
 
+        let bodyClass = 'post__body';
+        if (this.props.post.props.class) {
+            bodyClass += ' post__class__' + this.props.post.props.class.replace(/[^a-z0-9]+/gi, '-');
+        }
+
         return (
             <div>
                 {comment}
-                <div className='post__body'>
+                <div className={bodyClass}>
                     <div
                         key={`${post.id}_message`}
                         id={`${post.id}_message`}
