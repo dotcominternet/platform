@@ -232,16 +232,28 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 	if utils.Cfg.ServiceSettings.EnablePostUsernameOverride {
 		if len(cmd.Username) != 0 {
 			post.AddProp("override_username", cmd.Username)
-		} else {
-			post.AddProp("override_username", model.DEFAULT_WEBHOOK_USERNAME)
+		} else if len(response.Username) != 0 {
+			post.AddProp("override_username", response.Username)
+//		} else {
+//			post.AddProp("override_username", model.DEFAULT_WEBHOOK_USERNAME)
 		}
 	}
 
 	if utils.Cfg.ServiceSettings.EnablePostIconOverride {
 		if len(cmd.IconURL) != 0 {
 			post.AddProp("override_icon_url", cmd.IconURL)
-		} else {
-			post.AddProp("override_icon_url", model.DEFAULT_WEBHOOK_ICON)
+		} else if len(response.IconURL) != 0 {
+			post.AddProp("override_icon_url", response.IconURL)
+//		} else {
+//			post.AddProp("override_icon_url", model.DEFAULT_WEBHOOK_ICON)
+		}
+	}
+
+	if len(response.Props) > 0 {
+		for key, val := range response.Props {
+			if key != "attachments" && key != "override_icon_url" && key != "override_username" && key != "from_webhook" {
+				post.AddProp(key, val)
+			}
 		}
 	}
 
