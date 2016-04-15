@@ -39,9 +39,13 @@ func TestMeCommand(t *testing.T) {
 	if len(p1.Order) != 1 {
 		t.Fatal("Command failed to send")
 	} else {
-		if p1.Posts[p1.Order[0]].Message != `*hello*` {
+		if p1.Posts[p1.Order[0]].Message != `*Corey Hulen hello*` {
 			t.Log(p1.Posts[p1.Order[0]].Message)
 			t.Fatal("invalid shrug reponse")
+		}
+		if p1.Posts[p1.Order[0]].Props["class"] != `action` {
+			t.Log(p1.Posts[p1.Order[0]].Props)
+			t.Fatal("invalid shrug class")
 		}
 	}
 }

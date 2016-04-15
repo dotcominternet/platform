@@ -6,9 +6,9 @@ package api
 import (
 	l4g "github.com/alecthomas/log4go"
 	"github.com/braintree/manners"
-	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/store"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/gorilla/mux"
 	"gopkg.in/throttled/throttled.v1"
 	throttledStore "gopkg.in/throttled/throttled.v1/store"
 	"net/http"

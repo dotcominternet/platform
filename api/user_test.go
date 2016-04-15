@@ -6,11 +6,11 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"github.com/goamz/goamz/aws"
-	"github.com/goamz/goamz/s3"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/store"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/goamz/goamz/aws"
+	"github.com/goamz/goamz/s3"
 	"image"
 	"image/color"
 	"io"

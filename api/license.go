@@ -6,9 +6,9 @@ package api
 import (
 	"bytes"
 	l4g "github.com/alecthomas/log4go"
-	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strings"

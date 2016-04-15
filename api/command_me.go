@@ -51,7 +51,7 @@ func (me *MeProvider) DoCommand(c *Context, channelId string, message string) *m
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
-		Text: "*" + name + " " + message + "*",
+		Text:         "*" + name + " " + message + "*",
 		Props: model.StringInterface{
 			"class": "action",
 		},

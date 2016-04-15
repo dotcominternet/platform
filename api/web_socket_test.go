@@ -4,10 +4,10 @@
 package api
 
 import (
-	"github.com/gorilla/websocket"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/store"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"testing"
 	"time"

@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/einterfaces"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/gorilla/mux"
 	"github.com/mssola/user_agent"
 )
 

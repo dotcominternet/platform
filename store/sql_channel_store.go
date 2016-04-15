@@ -5,9 +5,9 @@ package store
 
 import (
 	"database/sql"
-	"github.com/go-gorp/gorp"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/go-gorp/gorp"
 )
 
 const (

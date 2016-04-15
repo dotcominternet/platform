@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 	"github.com/go-gorp/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/dotcominternet/platform/model"
-	"github.com/dotcominternet/platform/utils"
 )
 
 const (

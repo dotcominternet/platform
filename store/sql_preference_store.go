@@ -5,9 +5,9 @@ package store
 
 import (
 	l4g "github.com/alecthomas/log4go"
-	"github.com/go-gorp/gorp"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/go-gorp/gorp"
 )
 
 type SqlPreferenceStore struct {

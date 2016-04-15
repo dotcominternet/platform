@@ -12,9 +12,9 @@ import (
 	"strings"
 
 	l4g "github.com/alecthomas/log4go"
-	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	"github.com/gorilla/mux"
 )
 
 type CommandProvider interface {
@@ -234,8 +234,8 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 			post.AddProp("override_username", cmd.Username)
 		} else if len(response.Username) != 0 {
 			post.AddProp("override_username", response.Username)
-//		} else {
-//			post.AddProp("override_username", model.DEFAULT_WEBHOOK_USERNAME)
+			//		} else {
+			//			post.AddProp("override_username", model.DEFAULT_WEBHOOK_USERNAME)
 		}
 	}
 
@@ -244,8 +244,8 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 			post.AddProp("override_icon_url", cmd.IconURL)
 		} else if len(response.IconURL) != 0 {
 			post.AddProp("override_icon_url", response.IconURL)
-//		} else {
-//			post.AddProp("override_icon_url", model.DEFAULT_WEBHOOK_ICON)
+			//		} else {
+			//			post.AddProp("override_icon_url", model.DEFAULT_WEBHOOK_ICON)
 		}
 	}
 
