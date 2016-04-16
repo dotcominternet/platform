@@ -61,6 +61,18 @@ class PostBody extends React.Component {
         this.parseEmojis();
     }
 
+    collapsePosts() {
+        let x = document.querySelectorAll('.post__body.unchecked');
+        for (let i = 0; i < x.length; i++) {
+            let h = x[i].offsetHeight;
+            let cl = x[i].classList;
+            cl.remove('unchecked');
+            if (h > 400) {
+                cl.add('collapsed');
+            }
+        }
+    }
+
     render() {
         const {formatMessage} = this.props.intl;
         const post = this.props.post;
@@ -192,10 +204,12 @@ class PostBody extends React.Component {
             );
         }
 
-        let bodyClass = 'post__body';
+        let bodyClass = 'post__body unchecked';
         if (this.props.post.props.class) {
             bodyClass += ' post__class__' + this.props.post.props.class.replace(/[^a-z0-9]+/gi, '-');
         }
+
+        setTimeout(this.collapsePosts, 0);
 
         return (
             <div>
