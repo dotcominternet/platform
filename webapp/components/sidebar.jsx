@@ -381,7 +381,7 @@ export default class Sidebar extends React.Component {
         var badge = null;
         if (channelMember) {
             if (unreadCount.mentions) {
-                badge = <span className='badge pull-right small'>{unreadCount.mentions}</span>;
+                badge = <span className='badge pull-right small mentioned'>{msgCount}</span>;
                 this.badgesActive = true;
             }
         } else if (this.state.loadingDMChannel === index && channel.type === 'D') {
@@ -395,6 +395,10 @@ export default class Sidebar extends React.Component {
 
         if (msgCount > 0) {
             rowClass += ' has-badge';
+            if (badge == null) {
+                badge = <span className='badge pull-right small'>{msgCount}</span>;
+                this.badgesActive = true;
+            }
         }
 
         // set up status icon for direct message channels
