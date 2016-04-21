@@ -652,13 +652,11 @@ export function applyTheme(theme) {
     if (theme.mentionBj) {
         changeCss('.app__body .sidebar--left .nav-pills__unread-indicator', 'background:' + theme.mentionBj, 1);
         changeCss('.app__body .sidebar--left .badge', 'background:' + theme.mentionBj + '!important;', 1);
-        changeCss('.app__body .sidebar--left .badge.mentioned', 'color:' + theme.mentionBj + '!important;', 2);
     }
 
     if (theme.mentionColor) {
         changeCss('.app__body .sidebar--left .nav-pills__unread-indicator', 'color:' + theme.mentionColor, 2);
         changeCss('.app__body .sidebar--left .badge', 'color:' + theme.mentionColor + '!important;', 2);
-        changeCss('.app__body .sidebar--left .badge.mentioned', 'background:' + theme.mentionColor + '!important;', 1);
     }
 
     if (theme.centerChannelBg) {
