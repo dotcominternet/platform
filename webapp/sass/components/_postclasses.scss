@@ -1,15 +1,28 @@
 @charset 'UTF-8';
 
 $border: 2px solid hsla(0, 0%, 20%, 0.15);
-$brightness: 0.35;
+$brightness: 0.25;
 
 @mixin postBox {
-	border: 2px solid hsla(0, 0%, 20%, 0.15);
+	border: 1px solid hsla(0, 0%, 20%, 0.15);
+	border-bottom-width: 2px;
 	border-radius: 4px;
 	padding: 0.5em;
 }
 
-body .app__content .post .post__content .post__body {
+body #app-content #post-list .post .post__content .post__body {
+  h1 { font-size: 2em; border-bottom: 1px solid; }
+  h2 { font-size: 1.7em; }
+  h3 { font-size: 1.5em; }
+  h4 { font-size: 1.35em; }
+  h5 { font-size: 1.25em; }
+  h6 { font-size: 1.175em; }
+
+  img.markdown-inline-img {
+	  height: 1px;
+	  max-height: 200px;
+  }
+
   &.collapsed {
     min-height: 50px;
     max-height: 400px;
@@ -19,8 +32,8 @@ body .app__content .post .post__content .post__body {
   }
 
   &.post__class__action {
-    background: rgba(0, 100, 180, $brightness);
-    @include postBox;
+    background: rgba(0, 120, 190, 0.1);
+	padding: 0 0.5em;
 
     em {
       margin-left: -1.6em;
