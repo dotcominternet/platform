@@ -10,93 +10,102 @@ $brightness: 0.25;
 	padding: 0.5em;
 }
 
-body #app-content #post-list .post .post__content .post__body {
-  h1 { font-size: 2em; border-bottom: 1px solid; }
-  h2 { font-size: 1.7em; }
-  h3 { font-size: 1.5em; }
-  h4 { font-size: 1.35em; }
-  h5 { font-size: 1.25em; }
-  h6 { font-size: 1.175em; }
-
-  img.markdown-inline-img {
-	  height: 1px;
-	  max-height: 200px;
+body #app-content {
+  #post-create form#create_post {
+    max-width: initial;
   }
 
-  &.collapsed {
-    min-height: 50px;
-    max-height: 400px;
-    overflow-y: scroll;
-	background: hsla(0, 0%, 5%, 0.05);
-    border: 2px dotted hsla(0, 0%, 10%, 0.15);
-  }
-
-  &.post__class__action {
-    background: rgba(0, 120, 190, 0.1);
-	padding: 0 0.5em;
-
-    em {
-      margin-left: -1.6em;
-      font-style: oblique;
-      font-weight: 700;
+  #post-list .post .post__content {
+    max-width: initial;
+  
+    .post__body {
+      h1 { font-size: 2em; border-bottom: 1px solid; }
+      h2 { font-size: 1.7em; }
+      h3 { font-size: 1.5em; }
+      h4 { font-size: 1.35em; }
+      h5 { font-size: 1.25em; }
+      h6 { font-size: 1.175em; }
+    
+      img.markdown-inline-img {
+    	  height: 1px;
+    	  max-height: 200px;
+      }
+    
+      &.collapsed {
+        min-height: 50px;
+        max-height: 400px;
+        overflow-y: scroll;
+    	background: hsla(0, 0%, 5%, 0.05);
+        border: 2px dotted hsla(0, 0%, 10%, 0.15);
+      }
+    
+      &.post__class__action {
+        background: rgba(0, 120, 190, 0.1);
+    	padding: 0 0.5em;
+    
+        em {
+          margin-left: -1.6em;
+          font-style: oblique;
+          font-weight: 700;
+        }
+        em:before {
+          content: "＊ ";
+        }
+    
+        span.mention--highlight {
+          background: transparent;
+        }
+      }
+    
+      &.post__class__red {
+        background: rgba(255,15,0, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__orange {
+        background: rgba(255, 98, 0, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__yellow {
+        background: rgba(255, 225, 0, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__green {
+        background: rgba(166, 255, 0, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__aqua {
+        background: rgba(0, 255, 195, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__blue {
+        background: rgba(0, 208, 255, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__navy {
+        background: rgba(0, 15, 255, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__purple {
+        background: rgba(136, 0, 255, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__mauve {
+        background: rgba(225, 0, 255, $brightness);
+        @include postBox;
+      }
+    
+      &.post__class__grey {
+        background: rgba(128, 128, 128, $brightness);
+        @include postBox;
+      }
     }
-    em:before {
-      content: "＊ ";
-    }
-
-    span.mention--highlight {
-      background: transparent;
-    }
   }
-
-  &.post__class__red {
-    background: rgba(255,15,0, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__orange {
-    background: rgba(255, 98, 0, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__yellow {
-    background: rgba(255, 225, 0, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__green {
-    background: rgba(166, 255, 0, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__aqua {
-    background: rgba(0, 255, 195, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__blue {
-    background: rgba(0, 208, 255, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__navy {
-    background: rgba(0, 15, 255, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__purple {
-    background: rgba(136, 0, 255, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__mauve {
-    background: rgba(225, 0, 255, $brightness);
-    @include postBox;
-  }
-
-  &.post__class__grey {
-    background: rgba(128, 128, 128, $brightness);
-    @include postBox;
-  }
-
 }
