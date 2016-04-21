@@ -225,9 +225,8 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 	post := &model.Post{}
 	post.ChannelId = channelId
 
-	if !builtIn {
-		post.AddProp("from_webhook", "true")
-	}
+	defaultUser := false
+	defaultIcon := false
 
 	if utils.Cfg.ServiceSettings.EnablePostUsernameOverride {
 		if len(cmd.Username) != 0 {
@@ -236,6 +235,8 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 			post.AddProp("override_username", response.Username)
 			//		} else {
 			//			post.AddProp("override_username", model.DEFAULT_WEBHOOK_USERNAME)
+		} else {
+			defaultUser = true
 		}
 	}
 
@@ -246,15 +247,26 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 			post.AddProp("override_icon_url", response.IconURL)
 			//		} else {
 			//			post.AddProp("override_icon_url", model.DEFAULT_WEBHOOK_ICON)
+		} else {
+			defaultIcon = true
 		}
 	}
 
+	notBot := false
 	if len(response.Props) > 0 {
 		for key, val := range response.Props {
-			if key != "attachments" && key != "override_icon_url" && key != "override_username" && key != "from_webhook" {
+			if key == "from_webhook" {
+				if val == "false" {
+					notBot = true
+				}
+			} else if key != "attachments" && key != "override_icon_url" && key != "override_username" && key != "from_webhook" {
 				post.AddProp(key, val)
 			}
 		}
+	}
+
+	if !builtIn && !(defaultUser && defaultIcon && notBot) {
+		post.AddProp("from_webhook", "true")
 	}
 
 	if response.ResponseType == model.COMMAND_RESPONSE_TYPE_IN_CHANNEL {
