@@ -708,6 +708,7 @@ class UserSettingsGeneralTab extends React.Component {
             );
         }
 
+		/*
         let usernameSection;
         if (this.props.activeSection === 'username') {
             let usernameLabel = (
@@ -772,6 +773,7 @@ class UserSettingsGeneralTab extends React.Component {
                 />
             );
         }
+		*/
 
         const emailSection = this.createEmailSection();
 
@@ -862,8 +864,6 @@ class UserSettingsGeneralTab extends React.Component {
                     </h3>
                     <div className='divider-dark first'/>
                     {nameSection}
-                    <div className='divider-light'/>
-                    {usernameSection}
                     <div className='divider-light'/>
                     {nicknameSection}
                     <div className='divider-light'/>
