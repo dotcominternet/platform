@@ -348,9 +348,9 @@ func handleWebhookEventsAndForget(c *Context, post *model.Post, team *model.Team
 			return
 		}
 
-		if channel.Type != model.CHANNEL_OPEN {
-			return
-		}
+//		if channel.Type != model.CHANNEL_OPEN {
+//			return
+//		}
 
 		hchan := Srv.Store.Webhook().GetOutgoingByTeam(c.Session.TeamId)
 
@@ -372,7 +372,9 @@ func handleWebhookEventsAndForget(c *Context, post *model.Post, team *model.Team
 		relevantHooks := []*model.OutgoingWebhook{}
 
 		for _, hook := range hooks {
-			if hook.ChannelId == post.ChannelId {
+			if len(hook.ChannelId) == 0 && len(hook.TriggerWords) == 0 {
+				relevantHooks = append(relevantHooks, hook)
+			} else if hook.ChannelId == post.ChannelId {
 				if len(hook.TriggerWords) == 0 || hook.HasTriggerWord(firstWord) {
 					relevantHooks = append(relevantHooks, hook)
 				}
@@ -504,6 +506,11 @@ func sendNotifications(c *Context, post *model.Post, team *model.Team, channel *
 			// Add @channel to keywords if user has them turned on
 			if profile.NotifyProps["channel"] == "true" {
 				keywordMap["@channel"] = append(keywordMap["@channel"], profile.Id)
+			}
+
+			// Add @here to keywords if user hasn't them turned off and is not offline
+			if profile.NotifyProps["here"] != "false" && !profile.IsOffline() {
+				keywordMap["@here"] = append(keywordMap["@here"], profile.Id)
 			}
 		}
 

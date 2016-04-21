@@ -37,6 +37,7 @@ function getNotificationsStateFromStores() {
     var firstNameKey = false;
     var allKey = false;
     var channelKey = false;
+    var hereKey = false;
 
     if (user.notify_props) {
         if (user.notify_props.mention_keys) {
@@ -70,11 +71,13 @@ function getNotificationsStateFromStores() {
         if (user.notify_props.channel) {
             channelKey = user.notify_props.channel === 'true';
         }
+
+        hereKey = user.notify_props.here !== 'false';
     }
 
     return {notifyLevel: desktop, enableEmail: email, soundNeeded: soundNeeded, enableSound: sound,
             usernameKey: usernameKey, mentionKey: mentionKey, customKeys: customKeys, customKeysChecked: customKeys.length > 0,
-            firstNameKey: firstNameKey, allKey: allKey, channelKey: channelKey};
+            firstNameKey: firstNameKey, allKey: allKey, channelKey: channelKey, hereKey: hereKey};
 }
 
 const holders = defineMessages({
@@ -119,6 +122,7 @@ class NotificationsTab extends React.Component {
         this.updateFirstNameKey = this.updateFirstNameKey.bind(this);
         this.updateAllKey = this.updateAllKey.bind(this);
         this.updateChannelKey = this.updateChannelKey.bind(this);
+        this.updateHereKey = this.updateHereKey.bind(this);
         this.updateCustomMentionKeys = this.updateCustomMentionKeys.bind(this);
         this.onCustomChange = this.onCustomChange.bind(this);
 
@@ -148,6 +152,7 @@ class NotificationsTab extends React.Component {
         data.first_name = this.state.firstNameKey.toString();
         data.all = this.state.allKey.toString();
         data.channel = this.state.channelKey.toString();
+        data.here = this.state.hereKey.toString();
 
         Client.updateUserNotifyProps(data,
             function success() {
@@ -210,6 +215,9 @@ class NotificationsTab extends React.Component {
     }
     updateChannelKey(val) {
         this.setState({channelKey: val});
+    }
+    updateHereKey(val) {
+        this.setState({hereKey: val});
     }
     updateCustomMentionKeys() {
         var checked = ReactDOM.findDOMNode(this.refs.customcheck).checked;
@@ -559,6 +567,7 @@ class NotificationsTab extends React.Component {
             let handleUpdateMentionKey;
             let handleUpdateAllKey;
             let handleUpdateChannelKey;
+            let handleUpdateHereKey;
 
             if (user.first_name) {
                 handleUpdateFirstNameKey = function handleFirstNameKeyChange(e) {
@@ -676,6 +685,27 @@ class NotificationsTab extends React.Component {
                 </div>
             );
 
+            handleUpdateHereKey = function handleHereKeyChange(e) {
+                this.updateHereKey(e.target.checked);
+            }.bind(this);
+            inputs.push(
+                <div key='userNotificationHereOption'>
+                    <div className='checkbox'>
+                        <label>
+                            <input
+                                type='checkbox'
+                                checked={this.state.hereKey}
+                                onChange={handleUpdateHereKey}
+                            />
+                            <FormattedMessage
+                                id='user.settings.notifications.hereWide'
+                                defaultMessage='Here mentions "@here"'
+                            />
+                        </label>
+                    </div>
+                </div>
+            );
+
             inputs.push(
                 <div key='userNotificationCustomOption'>
                     <div className='checkbox'>
@@ -723,13 +753,18 @@ class NotificationsTab extends React.Component {
                 keys.push('@' + user.username);
             }
 
-            // if (this.state.allKey) {
-            //     keys.push('@all');
-            // }
+            if (this.state.allKey) {
+                keys.push('@all');
+            }
 
             if (this.state.channelKey) {
                 keys.push('@channel');
             }
+
+            if (this.state.hereKey) {
+                keys.push('@here');
+            }
+
             if (this.state.customKeys.length > 0) {
                 keys = keys.concat(this.state.customKeys.split(','));
             }

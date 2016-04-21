@@ -36,6 +36,15 @@ class AtMentionSuggestion extends React.Component {
                 />
             );
             icon = <i className='mention__image fa fa-users fa-2x'/>;
+        } else if (item.username === 'here') {
+            username = 'here';
+            description = (
+                <FormattedMessage
+                    id='suggestion.mention.here'
+                    defaultMessage='Notifies everyone who is online in the channel'
+                />
+            );
+            icon = <i className='mention__image fa fa-users fa-2x'/>;
         } else {
             username = item.username;
             description = Utils.getFullName(item);
@@ -109,6 +118,10 @@ export default class AtMentionProvider {
 
                 if ('channel'.startsWith(usernamePrefix)) {
                     filtered.push({username: 'channel'});
+                }
+
+                if ('here'.startsWith(usernamePrefix)) {
+                    filtered.push({username: 'here'});
                 }
             }
 

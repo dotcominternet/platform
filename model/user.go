@@ -188,12 +188,16 @@ func (u *User) PreUpdate() {
 func (u *User) SetDefaultNotifications() {
 	u.NotifyProps = make(map[string]string)
 	u.NotifyProps["email"] = "true"
-	u.NotifyProps["desktop"] = USER_NOTIFY_ALL
-	u.NotifyProps["desktop_sound"] = "true"
+	u.NotifyProps["desktop"] = USER_NOTIFY_MENTION
+	u.NotifyProps["desktop_sound"] = "false"
 	u.NotifyProps["mention_keys"] = u.Username + ",@" + u.Username
+	if len(u.FirstName) > 0 {
+		u.NotifyProps["mention_keys"] += ",@" + u.FirstName + u.LastName
+	}
 	u.NotifyProps["first_name"] = "false"
 	u.NotifyProps["all"] = "true"
 	u.NotifyProps["channel"] = "true"
+	u.NotifyProps["here"] = "true"
 	splitName := strings.Split(u.Nickname, " ")
 	if len(splitName) > 0 && splitName[0] != "" {
 		u.NotifyProps["first_name"] = "true"
@@ -433,6 +437,7 @@ var validUsernameChars = regexp.MustCompile(`^[a-z0-9\.\-_]+$`)
 var restrictedUsernames = []string{
 	"all",
 	"channel",
+	"here",
 }
 
 func IsValidUsername(s string) bool {

@@ -233,6 +233,10 @@ class UserStoreClass extends EventEmitter {
             keys.push('@channel');
         }
 
+        if (user.notify_props.here !== 'false') {
+            keys.push('@here');
+        }
+
         return keys;
     }
 
