@@ -65,6 +65,7 @@ export default class LoginLdap extends React.Component {
                             ref='id'
                             placeholder={Utils.localizeMessage('login_ldap.username', 'LDAP Username')}
                             spellCheck='false'
+                            autocapitalize='off'
                         />
                     </div>
                     <div className={'form-group' + errorClass}>

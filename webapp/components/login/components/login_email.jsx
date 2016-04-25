@@ -83,6 +83,7 @@ export default class LoginEmail extends React.Component {
                             ref='email'
                             placeholder={Utils.localizeMessage('login_email.email', 'Email')}
                             spellCheck='false'
+                            autocapitalize='off'
                         />
                     </div>
                     <div className={'form-group' + errorClass}>
