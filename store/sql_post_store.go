@@ -11,6 +11,7 @@ import (
 
 	"github.com/dotcominternet/platform/model"
 	"github.com/dotcominternet/platform/utils"
+	l4g "github.com/alecthomas/log4go"
 )
 
 type SqlPostStore struct {
@@ -644,6 +645,7 @@ func (s SqlPostStore) Search(teamId string, userId string, params *model.SearchP
 				DeleteAt = 0
 				AND Type NOT LIKE '` + model.POST_SYSTEM_MESSAGE_PREFIX + `%'
 				POST_FILTER
+				DATE_FILTER
 				AND ChannelId IN (
 					SELECT
 						Id
@@ -712,6 +714,24 @@ func (s SqlPostStore) Search(teamId string, userId string, params *model.SearchP
 			searchQuery = strings.Replace(searchQuery, "POST_FILTER", "", 1)
 		}
 
+		if params.SinceDate > 0 && params.UntilDate > 0 {
+			queryParams["SinceDate"] = params.SinceDate
+			queryParams["UntilDate"] = params.UntilDate
+			searchQuery = strings.Replace(searchQuery, "DATE_FILTER", `
+				AND createat >= :SinceDate
+				AND createat < :UntilDate`, 1)
+		} else if params.SinceDate > 0 {
+			queryParams["SinceDate"] = params.SinceDate
+			searchQuery = strings.Replace(searchQuery, "DATE_FILTER", `
+				AND createat >= :SinceDate`, 1)
+		} else if params.UntilDate > 0 {
+			queryParams["UntilDate"] = params.UntilDate
+			searchQuery = strings.Replace(searchQuery, "DATE_FILTER", `
+				AND createat < :UntilDate`, 1)
+		} else {
+			searchQuery = strings.Replace(searchQuery, "DATE_FILTER", "", 1)
+		}
+
 		if terms == "" {
 			// we've already confirmed that we have a channel or user to search for
 			searchQuery = strings.Replace(searchQuery, "SEARCH_CLAUSE", "", 1)
@@ -739,6 +759,7 @@ func (s SqlPostStore) Search(teamId string, userId string, params *model.SearchP
 
 		queryParams["Terms"] = terms
 
+		l4g.Warn("Running SQL: %s, %v", searchQuery, queryParams);
 		_, err := s.GetReplica().Select(&posts, searchQuery, queryParams)
 		if err != nil {
 			result.Err = model.NewLocAppError("SqlPostStore.Search", "store.sql_post.search.app_error", nil, "teamId="+teamId+", err="+err.Error())

@@ -5,6 +5,7 @@ package model
 
 import (
 	"strings"
+	"time"
 )
 
 type SearchParams struct {
@@ -12,9 +13,11 @@ type SearchParams struct {
 	IsHashtag  bool
 	InChannels []string
 	FromUsers  []string
+	SinceDate  int64
+	UntilDate  int64
 }
 
-var searchFlags = [...]string{"from", "channel", "in"}
+var searchFlags = [...]string{"from", "channel", "in", "on", "since", "until"}
 
 func splitWordsNoQuotes(text string) []string {
 	words := []string{}
@@ -124,6 +127,8 @@ func ParseSearchParams(text string) []*SearchParams {
 
 	inChannels := []string{}
 	fromUsers := []string{}
+	sinceDate := int64(0)
+	untilDate := int64(0)
 
 	for _, flagPair := range flags {
 		flag := flagPair[0]
@@ -133,6 +138,28 @@ func ParseSearchParams(text string) []*SearchParams {
 			inChannels = append(inChannels, value)
 		} else if flag == "from" {
 			fromUsers = append(fromUsers, value)
+		} else if flag == "on" || flag == "since" || flag == "until" {
+			dur := int64(1000)
+			tm, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local)
+			if err != nil {
+				tm, err = time.ParseInLocation("2006-01-02 15:04", value, time.Local)
+				dur = 60000
+			}
+			if err != nil {
+				tm, err = time.ParseInLocation("2006-01-02", value, time.Local)
+				dur = 86400000
+			}
+			if err == nil {
+				var ts int64 = tm.UnixNano() / 1000000
+				if flag == "on" {
+					sinceDate = ts
+					untilDate = ts + dur
+				} else if flag == "since" {
+					sinceDate = ts
+				} else if flag == "until" {
+					untilDate = ts
+				}
+			}
 		}
 	}
 
@@ -144,6 +171,8 @@ func ParseSearchParams(text string) []*SearchParams {
 			IsHashtag:  false,
 			InChannels: inChannels,
 			FromUsers:  fromUsers,
+			SinceDate:  sinceDate,
+			UntilDate:  untilDate,
 		})
 	}
 
@@ -153,6 +182,8 @@ func ParseSearchParams(text string) []*SearchParams {
 			IsHashtag:  true,
 			InChannels: inChannels,
 			FromUsers:  fromUsers,
+			SinceDate:  sinceDate,
+			UntilDate:  untilDate,
 		})
 	}
 
@@ -163,6 +194,8 @@ func ParseSearchParams(text string) []*SearchParams {
 			IsHashtag:  true,
 			InChannels: inChannels,
 			FromUsers:  fromUsers,
+			SinceDate:  sinceDate,
+			UntilDate:  untilDate,
 		})
 	}
 

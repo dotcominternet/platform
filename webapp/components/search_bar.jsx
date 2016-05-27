@@ -194,7 +194,7 @@ class SearchBar extends React.Component {
                     >
                         <FormattedHTMLMessage
                             id='search_bar.usage'
-                            defaultMessage='<h4>Search Options</h4><ul><li><span>Use </span><b>"quotation marks"</b><span> to search for phrases</span></li><li><span>Use </span><b>from:</b><span> to find posts from specific users and </span><b>in:</b><span> to find posts in specific channels</span></li></ul>'
+                            defaultMessage='<h4>Search Options</h4><ul><li><span>Use </span><b>"quotation marks"</b><span> to search for phrases</span></li><li><span>Use </span><b>from:</b><span> to find posts from specific users, </span><b>in:</b><span> to find posts in specific channels, </span><b>on:YYYY-MM-DD</b><span> to find on a certain day, and </span><b>since:YYYY-MM_DD until:YYYY-MM-DD</b><span> to find in specific date range</li></ul>'
                         />
                     </Popover>
                 </form>

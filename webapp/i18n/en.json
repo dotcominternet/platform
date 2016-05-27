@@ -1064,7 +1064,7 @@
   "rhs_root.permalink": "Permalink",
   "search_bar.cancel": "Cancel",
   "search_bar.search": "Search",
-  "search_bar.usage": "<h4>Search Options</h4><ul><li><span>Use </span><b>\"quotation marks\"</b><span> to search for phrases</span></li><li><span>Use </span><b>from:</b><span> to find posts from specific users and </span><b>in:</b><span> to find posts in specific channels</span></li></ul>",
+  "search_bar.usage": "<h4>Search Options</h4><ul><li><span>Use </span><b>\"quotation marks\"</b><span> to search for phrases</span></li><li><span>Use </span><b>from:</b><span> to find posts from specific users, </span><b>in:</b><span> to find posts in specific channels, </span><b>on:YYYY-MM-DD</b><span> to find on a certain day, and </span><b>since:YYYY-MM_DD until:YYYY-MM-DD</b><span> to find in specific date range</spam></li></ul>",
   "search_header.results": "Search Results",
   "search_header.title2": "Recent Mentions",
   "search_item.direct": "Direct Message",
