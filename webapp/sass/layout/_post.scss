@@ -636,6 +636,7 @@ body.ios {
             top: 30px;
             white-space: nowrap;
             width: 65px;
+			text-align: right;
         }
 
         .permalink-popover {
@@ -741,7 +742,7 @@ body.ios {
     .post__body {
         @include legacy-pie-clearfix;
         padding: .2em .5em;
-        width: calc(100% - 75px);
+        width: 100%;
         word-wrap: break-word;
 
         p {

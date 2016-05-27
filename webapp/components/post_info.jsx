@@ -202,9 +202,9 @@ export default class PostInfo extends React.Component {
                 >
                     <span
                         className='comment-icon'
+                        title={commentCountText}
                         dangerouslySetInnerHTML={{__html: Constants.REPLY_ICON}}
                     />
-                    {commentCountText}
                 </a>
             );
         }
@@ -220,13 +220,13 @@ export default class PostInfo extends React.Component {
                     />
                 </li>
                 <li className='col col__reply'>
+                    {comments}
                     <div
                         className='dropdown'
                         ref='dotMenu'
                     >
                         {dropdown}
                     </div>
-                    {comments}
                     {this.createRemovePostButton(post)}
                 </li>
             </ul>
