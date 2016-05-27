@@ -5,6 +5,8 @@ import React from 'react';
 
 import * as AsyncClient from 'utils/async_client.jsx';
 import IntegrationStore from 'stores/integration_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
+import * as Utils from 'utils/utils.jsx';
 
 import {FormattedMessage} from 'react-intl';
 import InstalledOutgoingWebhook from './installed_outgoing_webhook.jsx';
@@ -19,22 +21,19 @@ export default class InstalledOutgoingWebhooks extends React.Component {
         this.regenOutgoingWebhookToken = this.regenOutgoingWebhookToken.bind(this);
         this.deleteOutgoingWebhook = this.deleteOutgoingWebhook.bind(this);
 
+        const teamId = TeamStore.getCurrentId();
+
         this.state = {
-            outgoingWebhooks: []
+            outgoingWebhooks: IntegrationStore.getOutgoingWebhooks(teamId),
+            loading: !IntegrationStore.hasReceivedOutgoingWebhooks(teamId)
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         IntegrationStore.addChangeListener(this.handleIntegrationChange);
 
         if (window.mm_config.EnableOutgoingWebhooks === 'true') {
-            if (IntegrationStore.hasReceivedOutgoingWebhooks()) {
-                this.setState({
-                    outgoingWebhooks: IntegrationStore.getOutgoingWebhooks()
-                });
-            } else {
-                AsyncClient.listOutgoingHooks();
-            }
+            AsyncClient.listOutgoingHooks();
         }
     }
 
@@ -43,8 +42,11 @@ export default class InstalledOutgoingWebhooks extends React.Component {
     }
 
     handleIntegrationChange() {
+        const teamId = TeamStore.getCurrentId();
+
         this.setState({
-            outgoingWebhooks: IntegrationStore.getOutgoingWebhooks()
+            outgoingWebhooks: IntegrationStore.getOutgoingWebhooks(teamId),
+            loading: !IntegrationStore.hasReceivedOutgoingWebhooks(teamId)
         });
     }
 
@@ -82,7 +84,14 @@ export default class InstalledOutgoingWebhooks extends React.Component {
                         defaultMessage='Add Outgoing Webhook'
                     />
                 }
-                addLink='/settings/integrations/outgoing_webhooks/add'
+                addLink={'/' + Utils.getTeamNameFromUrl() + '/settings/integrations/outgoing_webhooks/add'}
+                emptyText={
+                    <FormattedMessage
+                        id='installed_outgoing_webhooks.empty'
+                        defaultMessage='No outgoing webhooks found'
+                    />
+                }
+                loading={this.state.loading}
             >
                 {outgoingWebhooks}
             </InstalledIntegrations>

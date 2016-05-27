@@ -187,8 +187,6 @@ export default class Textbox extends React.Component {
                     className={`form-control custom-textarea ${this.state.connection}`}
                     type='textarea'
                     spellCheck='true'
-                    autoComplete='off'
-                    autoCorrect='off'
                     maxLength={Constants.MAX_POST_LEN}
                     placeholder={this.props.createMessage}
                     value={this.props.messageText}
@@ -213,6 +211,7 @@ export default class Textbox extends React.Component {
                     {previewLink}
                     <a
                         target='_blank'
+                        rel='noopener noreferrer'
                         href='http://docs.mattermost.com/help/getting-started/messaging-basics.html'
                         className='textbox-help-link'
                     >

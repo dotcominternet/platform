@@ -1,20 +1,21 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
+import $ from 'jquery';
+
 import PostsView from './posts_view.jsx';
 import LoadingScreen from './loading_screen.jsx';
 
 import ChannelStore from 'stores/channel_store.jsx';
 import PostStore from 'stores/post_store.jsx';
-import UserStore from 'stores/user_store.jsx';
 
-import * as GlobalActions from 'action_creators/global_actions.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
 
 import Constants from 'utils/constants.jsx';
 
-import {createChannelIntroMessage} from 'utils/channel_intro_messages.jsx';
-
 import React from 'react';
+
+const MAXIMUM_CACHED_VIEWS = 3;
 
 export default class PostsViewContainer extends React.Component {
     constructor() {
@@ -23,7 +24,6 @@ export default class PostsViewContainer extends React.Component {
         this.onChannelChange = this.onChannelChange.bind(this);
         this.onChannelLeave = this.onChannelLeave.bind(this);
         this.onPostsChange = this.onPostsChange.bind(this);
-        this.onUserChange = this.onUserChange.bind(this);
         this.handlePostsViewScroll = this.handlePostsViewScroll.bind(this);
         this.loadMorePostsTop = this.loadMorePostsTop.bind(this);
         this.handlePostsViewJumpRequest = this.handlePostsViewJumpRequest.bind(this);
@@ -31,22 +31,29 @@ export default class PostsViewContainer extends React.Component {
         const currentChannelId = ChannelStore.getCurrentId();
         const state = {
             scrollType: PostsView.SCROLL_TYPE_BOTTOM,
-            scrollPost: null,
-            currentUser: UserStore.getCurrentUser()
+            scrollPost: null
         };
         if (currentChannelId) {
+            let lastViewed = Date.now();
+            const member = ChannelStore.getMember(currentChannelId);
+            if (member) {
+                lastViewed = member.last_viewed_at;
+            }
+
             Object.assign(state, {
                 currentChannelIndex: 0,
                 channels: [currentChannelId],
                 postLists: [this.getChannelPosts(currentChannelId)],
-                atTop: [PostStore.getVisibilityAtTop(currentChannelId)]
+                atTop: [PostStore.getVisibilityAtTop(currentChannelId)],
+                currentLastViewed: lastViewed
             });
         } else {
             Object.assign(state, {
                 currentChannelIndex: null,
                 channels: [],
                 postLists: [],
-                atTop: []
+                atTop: [],
+                currentLastViewed: Date.now()
             });
         }
 
@@ -58,17 +65,14 @@ export default class PostsViewContainer extends React.Component {
         ChannelStore.addLeaveListener(this.onChannelLeave);
         PostStore.addChangeListener(this.onPostsChange);
         PostStore.addPostsViewJumpListener(this.handlePostsViewJumpRequest);
-        UserStore.addChangeListener(this.onUserChange);
+        $('body').addClass('app__body');
     }
     componentWillUnmount() {
         ChannelStore.removeChangeListener(this.onChannelChange);
         ChannelStore.removeLeaveListener(this.onChannelLeave);
         PostStore.removeChangeListener(this.onPostsChange);
         PostStore.removePostsViewJumpListener(this.handlePostsViewJumpRequest);
-        UserStore.removeChangeListener(this.onUserChange);
-    }
-    onUserChange() {
-        this.setState({currentUser: UserStore.getCurrentUser()});
+        $('body').removeClass('app__body');
     }
     handlePostsViewJumpRequest(type, post) {
         switch (type) {
@@ -105,6 +109,12 @@ export default class PostsViewContainer extends React.Component {
 
         let newIndex = channels.indexOf(channelId);
         if (newIndex === -1) {
+            if (channels.length >= MAXIMUM_CACHED_VIEWS) {
+                channels.shift();
+                atTop.shift();
+                postLists.shift();
+            }
+
             newIndex = channels.length;
             channels.push(channelId);
             atTop[newIndex] = PostStore.getVisibilityAtTop(channelId);
@@ -163,7 +173,7 @@ export default class PostsViewContainer extends React.Component {
         const currentChannelId = channels[this.state.currentChannelIndex];
         const channel = ChannelStore.get(currentChannelId);
 
-        if (!this.state.currentUser || !channel) {
+        if (!channel) {
             return null;
         }
 
@@ -172,7 +182,7 @@ export default class PostsViewContainer extends React.Component {
             const isActive = (channels[i] === currentChannelId);
             postListCtls.push(
                 <PostsView
-                    key={'postsviewkey' + i}
+                    key={'postsviewkey' + channels[i]}
                     isActive={isActive}
                     postList={postLists[i]}
                     scrollType={this.state.scrollType}
@@ -184,10 +194,8 @@ export default class PostsViewContainer extends React.Component {
                     }}
                     showMoreMessagesTop={!this.state.atTop[this.state.currentChannelIndex]}
                     showMoreMessagesBottom={false}
-                    introText={channel ? createChannelIntroMessage(channel) : null}
+                    channel={channel}
                     messageSeparatorTime={this.state.currentLastViewed}
-                    profiles={this.props.profiles}
-                    currentUser={this.state.currentUser}
                 />
             );
             if (!postLists[i] && isActive) {
@@ -207,7 +215,3 @@ export default class PostsViewContainer extends React.Component {
         );
     }
 }
-
-PostsViewContainer.propTypes = {
-    profiles: React.PropTypes.object
-};

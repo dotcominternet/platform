@@ -1,8 +1,6 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
-import $ from 'jquery';
-
 import Constants from './constants.jsx';
 import emojis from './emoji.json';
 
@@ -29,10 +27,12 @@ const emoticonPatterns = {
     thumbsdown: /(^|\s)(:\-1:)(?=$|\s)/g // :-1:
 };
 
-export const emoticons = initializeEmoticons();
+let emoticonsByName;
+let emoticonsByCodePoint;
 
 function initializeEmoticons() {
-    const emoticonMap = new Map();
+    emoticonsByName = new Map();
+    emoticonsByCodePoint = new Set();
 
     for (const emoji of emojis) {
         const unicode = emoji.emoji;
@@ -40,6 +40,8 @@ function initializeEmoticons() {
         let filename = '';
         if (unicode) {
             // this is a unicode emoji so the character code determines the file name
+            let codepoint = '';
+
             for (let i = 0; i < unicode.length; i += 2) {
                 const code = fixedCharCodeAt(unicode, i);
 
@@ -50,25 +52,26 @@ function initializeEmoticons() {
 
                 // some emoji (such as country flags) span multiple unicode characters
                 if (i !== 0) {
-                    filename += '-';
+                    codepoint += '-';
                 }
 
-                filename += pad(code.toString(16));
+                codepoint += pad(code.toString(16));
             }
+
+            filename = codepoint;
+            emoticonsByCodePoint.add(codepoint);
         } else {
             // this isn't a unicode emoji so the first alias determines the file name
             filename = emoji.aliases[0];
         }
 
         for (const alias of emoji.aliases) {
-            emoticonMap.set(alias, {
+            emoticonsByName.set(alias, {
                 alias,
                 path: getImagePathForEmoticon(filename)
             });
         }
     }
-
-    return emoticonMap;
 }
 
 // Pads a hexadecimal number with zeroes to be at least 4 digits long
@@ -110,37 +113,57 @@ function fixedCharCodeAt(str, idx = 0) {
     return code;
 }
 
+export function getEmoticonsByName() {
+    if (!emoticonsByName) {
+        initializeEmoticons();
+    }
+
+    return emoticonsByName;
+}
+
+export function getEmoticonsByCodePoint() {
+    if (!emoticonsByCodePoint) {
+        initializeEmoticons();
+    }
+
+    return emoticonsByCodePoint;
+}
+
 export function handleEmoticons(text, tokens) {
     let output = text;
 
-    function replaceEmoticonWithToken(fullMatch, prefix, matchText, name) {
-        if (emoticons.has(name)) {
+    function replaceEmoticonWithToken(fullMatch, matchText, name) {
+        if (getEmoticonsByName().has(name)) {
             const index = tokens.size;
             const alias = `MM_EMOTICON${index}`;
-            const path = emoticons.get(name).path;
+            const path = getEmoticonsByName().get(name).path;
 
             tokens.set(alias, {
                 value: `<img align="absmiddle" alt="${matchText}" class="emoticon" src="${path}" title="${matchText}" />`,
                 originalText: fullMatch
             });
 
-            return prefix + alias;
+            return alias;
         }
 
         return fullMatch;
     }
 
-    output = output.replace(/(^|\s)(:([a-zA-Z0-9_-]+):)(?=$|\s)/g, (fullMatch, prefix, matchText, name) => replaceEmoticonWithToken(fullMatch, prefix, matchText, name));
+    // match named emoticons like :goat:
+    output = output.replace(/(:([a-zA-Z0-9_-]+):)/g, (fullMatch, matchText, name) => replaceEmoticonWithToken(fullMatch, matchText, name));
 
-    $.each(emoticonPatterns, (name, pattern) => {
+    // match text smilies like :D
+    for (const name of Object.keys(emoticonPatterns)) {
+        const pattern = emoticonPatterns[name];
+
         // this might look a bit funny, but since the name isn't contained in the actual match
         // like with the named emoticons, we need to add it in manually
-        output = output.replace(pattern, (fullMatch, prefix, matchText) => replaceEmoticonWithToken(fullMatch, prefix, matchText, name));
-    });
+        output = output.replace(pattern, (fullMatch, matchText) => replaceEmoticonWithToken(fullMatch, matchText, name));
+    }
 
     return output;
 }
 
-function getImagePathForEmoticon(name) {
+export function getImagePathForEmoticon(name) {
     return Constants.EMOJI_PATH + '/' + name + '.png';
 }

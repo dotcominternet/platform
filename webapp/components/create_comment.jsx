@@ -4,7 +4,7 @@
 import $ from 'jquery';
 import ReactDOM from 'react-dom';
 import AppDispatcher from '../dispatcher/app_dispatcher.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
 import UserStore from 'stores/user_store.jsx';
@@ -16,7 +16,7 @@ import MsgTyping from './msg_typing.jsx';
 import FileUpload from './file_upload.jsx';
 import FilePreview from './file_preview.jsx';
 import * as Utils from 'utils/utils.jsx';
-import * as GlobalActions from 'action_creators/global_actions.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
 
 import Constants from 'utils/constants.jsx';
 
@@ -62,7 +62,6 @@ class CreateComment extends React.Component {
         this.handleUploadError = this.handleUploadError.bind(this);
         this.removePreview = this.removePreview.bind(this);
         this.getFileCount = this.getFileCount.bind(this);
-        this.handleResize = this.handleResize.bind(this);
         this.onPreferenceChange = this.onPreferenceChange.bind(this);
         this.focusTextbox = this.focusTextbox.bind(this);
         this.showPostDeletedModal = this.showPostDeletedModal.bind(this);
@@ -73,31 +72,25 @@ class CreateComment extends React.Component {
         const draft = PostStore.getCommentDraft(this.props.rootId);
         this.state = {
             messageText: draft.message,
+            lastMessage: '',
             uploadsInProgress: draft.uploadsInProgress,
             previews: draft.previews,
             submitting: false,
-            windowWidth: Utils.windowWidth(),
             ctrlSend: PreferenceStore.getBool(Constants.Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter'),
             showPostDeletedModal: false
         };
     }
     componentDidMount() {
         PreferenceStore.addChangeListener(this.onPreferenceChange);
-        window.addEventListener('resize', this.handleResize);
-
         this.focusTextbox();
     }
     componentWillUnmount() {
         PreferenceStore.removeChangeListener(this.onPreferenceChange);
-        window.removeEventListener('resize', this.handleResize);
     }
     onPreferenceChange() {
         this.setState({
             ctrlSend: PreferenceStore.getBool(Constants.Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter')
         });
-    }
-    handleResize() {
-        this.setState({windowWidth: Utils.windowWidth()});
     }
     componentDidUpdate(prevProps, prevState) {
         if (prevState.uploadsInProgress < this.state.uploadsInProgress) {
@@ -119,7 +112,7 @@ class CreateComment extends React.Component {
             return;
         }
 
-        let post = {};
+        const post = {};
         post.filenames = [];
         post.message = this.state.messageText;
 
@@ -148,12 +141,11 @@ class CreateComment extends React.Component {
 
         Client.createPost(
             post,
-            ChannelStore.getCurrent(),
             (data) => {
                 AsyncClient.getPosts(this.props.channelId);
 
                 const channel = ChannelStore.get(this.props.channelId);
-                let member = ChannelStore.getMember(this.props.channelId);
+                const member = ChannelStore.getMember(this.props.channelId);
                 member.msg_count = channel.total_msg_count;
                 member.last_viewed_at = Date.now();
                 ChannelStore.setChannelMember(member);
@@ -181,6 +173,7 @@ class CreateComment extends React.Component {
 
         this.setState({
             messageText: '',
+            lastMessage: this.state.messageText,
             submitting: false,
             postError: null,
             previews: [],
@@ -199,7 +192,7 @@ class CreateComment extends React.Component {
         GlobalActions.emitLocalUserTypingEvent(this.props.channelId, this.props.rootId);
     }
     handleUserInput(messageText) {
-        let draft = PostStore.getCommentDraft(this.props.rootId);
+        const draft = PostStore.getCommentDraft(this.props.rootId);
         draft.message = messageText;
         PostStore.storeCommentDraft(this.props.rootId, draft);
 
@@ -212,7 +205,7 @@ class CreateComment extends React.Component {
             return;
         }
 
-        if (e.keyCode === KeyCodes.UP && this.state.messageText === '') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.keyCode === KeyCodes.UP && this.state.messageText === '') {
             e.preventDefault();
 
             const lastPost = PostStore.getCurrentUsersLatestPost(this.props.channelId, this.props.rootId);
@@ -230,12 +223,24 @@ class CreateComment extends React.Component {
                 comments: PostStore.getCommentCount(lastPost)
             });
         }
+
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.keyCode === KeyCodes.UP) {
+            const lastPost = PostStore.getCurrentUsersLatestPost(this.props.channelId, this.props.rootId);
+            if (!lastPost) {
+                return;
+            }
+            let message = lastPost.message;
+            if (this.state.lastMessage !== '') {
+                message = this.state.lastMessage;
+            }
+            this.setState({messageText: message});
+        }
     }
     handleUploadClick() {
         this.focusTextbox();
     }
     handleUploadStart(clientIds) {
-        let draft = PostStore.getCommentDraft(this.props.rootId);
+        const draft = PostStore.getCommentDraft(this.props.rootId);
 
         draft.uploadsInProgress = draft.uploadsInProgress.concat(clientIds);
         PostStore.storeCommentDraft(this.props.rootId, draft);
@@ -247,7 +252,7 @@ class CreateComment extends React.Component {
         this.focusTextbox();
     }
     handleFileUploadComplete(filenames, clientIds) {
-        let draft = PostStore.getCommentDraft(this.props.rootId);
+        const draft = PostStore.getCommentDraft(this.props.rootId);
 
         // remove each finished file from uploads
         for (let i = 0; i < clientIds.length; i++) {
@@ -267,7 +272,7 @@ class CreateComment extends React.Component {
         if (clientId === -1) {
             this.setState({serverError: err});
         } else {
-            let draft = PostStore.getCommentDraft(this.props.rootId);
+            const draft = PostStore.getCommentDraft(this.props.rootId);
 
             const index = draft.uploadsInProgress.indexOf(clientId);
             if (index !== -1) {
@@ -280,8 +285,8 @@ class CreateComment extends React.Component {
         }
     }
     removePreview(id) {
-        let previews = this.state.previews;
-        let uploadsInProgress = this.state.uploadsInProgress;
+        const previews = this.state.previews;
+        const uploadsInProgress = this.state.uploadsInProgress;
 
         // id can either be the path of an uploaded file or the client id of an in progress upload
         let index = previews.indexOf(id);
@@ -296,7 +301,7 @@ class CreateComment extends React.Component {
             previews.splice(index, 1);
         }
 
-        let draft = PostStore.getCommentDraft(this.props.rootId);
+        const draft = PostStore.getCommentDraft(this.props.rootId);
         draft.previews = previews;
         draft.uploadsInProgress = uploadsInProgress;
         PostStore.storeCommentDraft(this.props.rootId, draft);

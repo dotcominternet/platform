@@ -31,9 +31,7 @@ var CfgFileName string = ""
 var ClientCfg map[string]string = map[string]string{}
 
 func FindConfigFile(fileName string) string {
-	if _, err := os.Stat("/tmp/" + fileName); err == nil {
-		fileName, _ = filepath.Abs("/tmp/" + fileName)
-	} else if _, err := os.Stat("./config/" + fileName); err == nil {
+	if _, err := os.Stat("./config/" + fileName); err == nil {
 		fileName, _ = filepath.Abs("./config/" + fileName)
 	} else if _, err := os.Stat("../config/" + fileName); err == nil {
 		fileName, _ = filepath.Abs("../config/" + fileName)
@@ -50,11 +48,17 @@ func FindDir(dir string) string {
 		fileName, _ = filepath.Abs("./" + dir + "/")
 	} else if _, err := os.Stat("../" + dir + "/"); err == nil {
 		fileName, _ = filepath.Abs("../" + dir + "/")
-	} else if _, err := os.Stat("/tmp/" + dir); err == nil {
-		fileName, _ = filepath.Abs("/tmp/" + dir)
 	}
 
 	return fileName + "/"
+}
+
+func DisableDebugLogForTest() {
+	l4g.Global["stdout"].Level = l4g.WARNING
+}
+
+func EnableDebugLogForTest() {
+	l4g.Global["stdout"].Level = l4g.DEBUG
 }
 
 func ConfigureCmdLineLog() {
@@ -194,18 +198,17 @@ func getClientConfig(c *model.Config) map[string]string {
 	props["BuildNumber"] = model.BuildNumber
 	props["BuildDate"] = model.BuildDate
 	props["BuildHash"] = model.BuildHash
+	props["BuildHashEnterprise"] = model.BuildHashEnterprise
 	props["BuildEnterpriseReady"] = model.BuildEnterpriseReady
 
 	props["SiteName"] = c.TeamSettings.SiteName
 	props["EnableTeamCreation"] = strconv.FormatBool(c.TeamSettings.EnableTeamCreation)
 	props["EnableUserCreation"] = strconv.FormatBool(c.TeamSettings.EnableUserCreation)
+	props["EnableOpenServer"] = strconv.FormatBool(*c.TeamSettings.EnableOpenServer)
 	props["RestrictTeamNames"] = strconv.FormatBool(*c.TeamSettings.RestrictTeamNames)
-	props["EnableTeamListing"] = strconv.FormatBool(*c.TeamSettings.EnableTeamListing)
-	props["EnableCustomBrand"] = strconv.FormatBool(*c.TeamSettings.EnableCustomBrand)
-	props["CustomBrandText"] = *c.TeamSettings.CustomBrandText
+	props["RestrictDirectMessage"] = *c.TeamSettings.RestrictDirectMessage
 
 	props["EnableOAuthServiceProvider"] = strconv.FormatBool(c.ServiceSettings.EnableOAuthServiceProvider)
-
 	props["SegmentDeveloperKey"] = c.ServiceSettings.SegmentDeveloperKey
 	props["GoogleDeveloperKey"] = c.ServiceSettings.GoogleDeveloperKey
 	props["EnableIncomingWebhooks"] = strconv.FormatBool(c.ServiceSettings.EnableIncomingWebhooks)
@@ -217,10 +220,10 @@ func getClientConfig(c *model.Config) map[string]string {
 	props["EnableDeveloper"] = strconv.FormatBool(*c.ServiceSettings.EnableDeveloper)
 
 	props["SendEmailNotifications"] = strconv.FormatBool(c.EmailSettings.SendEmailNotifications)
+	props["SendPushNotifications"] = strconv.FormatBool(*c.EmailSettings.SendPushNotifications)
 	props["EnableSignUpWithEmail"] = strconv.FormatBool(c.EmailSettings.EnableSignUpWithEmail)
 	props["EnableSignInWithEmail"] = strconv.FormatBool(*c.EmailSettings.EnableSignInWithEmail)
 	props["EnableSignInWithUsername"] = strconv.FormatBool(*c.EmailSettings.EnableSignInWithUsername)
-	props["EnableMultifactorAuthentication"] = strconv.FormatBool(*c.ServiceSettings.EnableMultifactorAuthentication)
 	props["RequireEmailVerification"] = strconv.FormatBool(c.EmailSettings.RequireEmailVerification)
 	props["FeedbackEmail"] = c.EmailSettings.FeedbackEmail
 
@@ -240,14 +243,31 @@ func getClientConfig(c *model.Config) map[string]string {
 	props["ProfileHeight"] = fmt.Sprintf("%v", c.FileSettings.ProfileHeight)
 	props["ProfileWidth"] = fmt.Sprintf("%v", c.FileSettings.ProfileWidth)
 
-	props["EnableLdap"] = strconv.FormatBool(*c.LdapSettings.Enable)
-
 	props["WebsocketPort"] = fmt.Sprintf("%v", *c.ServiceSettings.WebsocketPort)
 	props["WebsocketSecurePort"] = fmt.Sprintf("%v", *c.ServiceSettings.WebsocketSecurePort)
 
 	props["AllowCorsFrom"] = *c.ServiceSettings.AllowCorsFrom
 
-	props["EnableCompliance"] = strconv.FormatBool(*c.ComplianceSettings.Enable)
+	if IsLicensed {
+		if *License.Features.CustomBrand {
+			props["EnableCustomBrand"] = strconv.FormatBool(*c.TeamSettings.EnableCustomBrand)
+			props["CustomBrandText"] = *c.TeamSettings.CustomBrandText
+		}
+
+		if *License.Features.LDAP {
+			props["EnableLdap"] = strconv.FormatBool(*c.LdapSettings.Enable)
+			props["LdapLoginFieldName"] = *c.LdapSettings.LoginFieldName
+			props["NicknameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.NicknameAttribute != "")
+		}
+
+		if *License.Features.MFA {
+			props["EnableMultifactorAuthentication"] = strconv.FormatBool(*c.ServiceSettings.EnableMultifactorAuthentication)
+		}
+
+		if *License.Features.Compliance {
+			props["EnableCompliance"] = strconv.FormatBool(*c.ComplianceSettings.Enable)
+		}
+	}
 
 	return props
 }
@@ -260,4 +280,42 @@ func ValidateLdapFilter(cfg *model.Config) *model.AppError {
 		}
 	}
 	return nil
+}
+
+func Desanitize(cfg *model.Config) {
+	if cfg.LdapSettings.BindPassword != nil && *cfg.LdapSettings.BindPassword == model.FAKE_SETTING {
+		*cfg.LdapSettings.BindPassword = *Cfg.LdapSettings.BindPassword
+	}
+
+	if cfg.FileSettings.PublicLinkSalt == model.FAKE_SETTING {
+		cfg.FileSettings.PublicLinkSalt = Cfg.FileSettings.PublicLinkSalt
+	}
+	if cfg.FileSettings.AmazonS3SecretAccessKey == model.FAKE_SETTING {
+		cfg.FileSettings.AmazonS3SecretAccessKey = Cfg.FileSettings.AmazonS3SecretAccessKey
+	}
+
+	if cfg.EmailSettings.InviteSalt == model.FAKE_SETTING {
+		cfg.EmailSettings.InviteSalt = Cfg.EmailSettings.InviteSalt
+	}
+	if cfg.EmailSettings.PasswordResetSalt == model.FAKE_SETTING {
+		cfg.EmailSettings.PasswordResetSalt = Cfg.EmailSettings.PasswordResetSalt
+	}
+	if cfg.EmailSettings.SMTPPassword == model.FAKE_SETTING {
+		cfg.EmailSettings.SMTPPassword = Cfg.EmailSettings.SMTPPassword
+	}
+
+	if cfg.GitLabSettings.Secret == model.FAKE_SETTING {
+		cfg.GitLabSettings.Secret = Cfg.GitLabSettings.Secret
+	}
+
+	if cfg.SqlSettings.DataSource == model.FAKE_SETTING {
+		cfg.SqlSettings.DataSource = Cfg.SqlSettings.DataSource
+	}
+	if cfg.SqlSettings.AtRestEncryptKey == model.FAKE_SETTING {
+		cfg.SqlSettings.AtRestEncryptKey = Cfg.SqlSettings.AtRestEncryptKey
+	}
+
+	for i := range cfg.SqlSettings.DataSourceReplicas {
+		cfg.SqlSettings.DataSourceReplicas[i] = Cfg.SqlSettings.DataSourceReplicas[i]
+	}
 }

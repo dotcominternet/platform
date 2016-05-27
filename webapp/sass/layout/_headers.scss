@@ -67,9 +67,9 @@
 
 .channel-intro {
     border-bottom: 1px solid $light-gray;
-    margin: 0 auto 35px;
-    max-width: 1000px;
-    padding: 0 1em 5px;
+    margin: 0 auto 15px;
+    max-width: 990px;
+    padding: 0 15px;
 
     .intro-links {
         display: inline-block;
@@ -83,6 +83,12 @@
     .channel-intro-profile {
         margin-left: 63px;
         margin-top: 5px;
+
+        .user-popover {
+            max-width: calc(100% - 100px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 
     .channel-intro-img {
@@ -107,12 +113,14 @@
 
     .channel-intro-text {
         margin-top: 35px;
+        word-break: break-all;
     }
 }
 
 // Team Header in Sidebar
 .sidebar--left,
-.sidebar--menu {
+.sidebar--menu,
+.admin-sidebar {
     .team__header {
         @include legacy-pie-clearfix;
         padding: 9px 10px;
@@ -283,7 +291,8 @@
 
         &:first-child {
             border-left: none;
-            padding-left: 1em;
+            padding-left: 15px;
+            padding-right: 1em;
             text-align: left !important;
             width: 100%;
         }

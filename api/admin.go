@@ -10,33 +10,36 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	l4g "github.com/alecthomas/log4go"
+	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/einterfaces"
 	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/store"
 	"github.com/dotcominternet/platform/utils"
-	"github.com/gorilla/mux"
 	"github.com/mssola/user_agent"
 )
 
-func InitAdmin(r *mux.Router) {
+func InitAdmin() {
 	l4g.Debug(utils.T("api.admin.init.debug"))
 
-	sr := r.PathPrefix("/admin").Subrouter()
-	sr.Handle("/logs", ApiUserRequired(getLogs)).Methods("GET")
-	sr.Handle("/audits", ApiUserRequired(getAllAudits)).Methods("GET")
-	sr.Handle("/config", ApiUserRequired(getConfig)).Methods("GET")
-	sr.Handle("/save_config", ApiUserRequired(saveConfig)).Methods("POST")
-	sr.Handle("/test_email", ApiUserRequired(testEmail)).Methods("POST")
-	sr.Handle("/client_props", ApiAppHandler(getClientConfig)).Methods("GET")
-	sr.Handle("/log_client", ApiAppHandler(logClient)).Methods("POST")
-	sr.Handle("/analytics/{id:[A-Za-z0-9]+}/{name:[A-Za-z0-9_]+}", ApiUserRequired(getAnalytics)).Methods("GET")
-	sr.Handle("/analytics/{name:[A-Za-z0-9_]+}", ApiUserRequired(getAnalytics)).Methods("GET")
-	sr.Handle("/save_compliance_report", ApiUserRequired(saveComplianceReport)).Methods("POST")
-	sr.Handle("/compliance_reports", ApiUserRequired(getComplianceReports)).Methods("GET")
-	sr.Handle("/download_compliance_report/{id:[A-Za-z0-9]+}", ApiUserRequired(downloadComplianceReport)).Methods("GET")
-	sr.Handle("/upload_brand_image", ApiAdminSystemRequired(uploadBrandImage)).Methods("POST")
-	sr.Handle("/get_brand_image", ApiAppHandlerTrustRequester(getBrandImage)).Methods("GET")
+	BaseRoutes.Admin.Handle("/logs", ApiUserRequired(getLogs)).Methods("GET")
+	BaseRoutes.Admin.Handle("/audits", ApiUserRequired(getAllAudits)).Methods("GET")
+	BaseRoutes.Admin.Handle("/config", ApiUserRequired(getConfig)).Methods("GET")
+	BaseRoutes.Admin.Handle("/save_config", ApiUserRequired(saveConfig)).Methods("POST")
+	BaseRoutes.Admin.Handle("/reload_config", ApiUserRequired(reloadConfig)).Methods("GET")
+	BaseRoutes.Admin.Handle("/test_email", ApiUserRequired(testEmail)).Methods("POST")
+	BaseRoutes.Admin.Handle("/recycle_db_conn", ApiUserRequired(recycleDatabaseConnection)).Methods("GET")
+	BaseRoutes.Admin.Handle("/analytics/{id:[A-Za-z0-9]+}/{name:[A-Za-z0-9_]+}", ApiUserRequired(getAnalytics)).Methods("GET")
+	BaseRoutes.Admin.Handle("/analytics/{name:[A-Za-z0-9_]+}", ApiUserRequired(getAnalytics)).Methods("GET")
+	BaseRoutes.Admin.Handle("/save_compliance_report", ApiUserRequired(saveComplianceReport)).Methods("POST")
+	BaseRoutes.Admin.Handle("/compliance_reports", ApiUserRequired(getComplianceReports)).Methods("GET")
+	BaseRoutes.Admin.Handle("/download_compliance_report/{id:[A-Za-z0-9]+}", ApiUserRequiredTrustRequester(downloadComplianceReport)).Methods("GET")
+	BaseRoutes.Admin.Handle("/upload_brand_image", ApiAdminSystemRequired(uploadBrandImage)).Methods("POST")
+	BaseRoutes.Admin.Handle("/get_brand_image", ApiAppHandlerTrustRequester(getBrandImage)).Methods("GET")
+	BaseRoutes.Admin.Handle("/reset_mfa", ApiAdminSystemRequired(adminResetMfa)).Methods("POST")
+	BaseRoutes.Admin.Handle("/reset_password", ApiAdminSystemRequired(adminResetPassword)).Methods("POST")
 }
 
 func getLogs(c *Context, w http.ResponseWriter, r *http.Request) {
@@ -93,32 +96,6 @@ func getAllAudits(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getClientConfig(c *Context, w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(model.MapToJson(utils.ClientCfg)))
-}
-
-func logClient(c *Context, w http.ResponseWriter, r *http.Request) {
-	m := model.MapFromJson(r.Body)
-
-	lvl := m["level"]
-	msg := m["message"]
-
-	if len(msg) > 400 {
-		msg = msg[0:399]
-	}
-
-	if lvl == "ERROR" {
-		err := &model.AppError{}
-		err.Message = msg
-		err.Where = "client"
-		c.LogError(err)
-	}
-
-	rm := make(map[string]string)
-	rm["SUCCESS"] = "true"
-	w.Write([]byte(model.MapToJson(rm)))
-}
-
 func getConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 	if !c.HasSystemAdminPermissions("getConfig") {
 		return
@@ -126,10 +103,21 @@ func getConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	json := utils.Cfg.ToJson()
 	cfg := model.ConfigFromJson(strings.NewReader(json))
-	json = cfg.ToJson()
+
+	cfg.Sanitize()
 
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	w.Write([]byte(json))
+	w.Write([]byte(cfg.ToJson()))
+}
+
+func reloadConfig(c *Context, w http.ResponseWriter, r *http.Request) {
+	if !c.HasSystemAdminPermissions("reloadConfig") {
+		return
+	}
+
+	utils.LoadConfig(utils.CfgFileName)
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	ReturnStatusOK(w)
 }
 
 func saveConfig(c *Context, w http.ResponseWriter, r *http.Request) {
@@ -144,6 +132,7 @@ func saveConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg.SetDefaults()
+	utils.Desanitize(cfg)
 
 	if err := cfg.IsValid(); err != nil {
 		c.Err = err
@@ -159,8 +148,29 @@ func saveConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	utils.SaveConfig(utils.CfgFileName, cfg)
 	utils.LoadConfig(utils.CfgFileName)
-	json := utils.Cfg.ToJson()
-	w.Write([]byte(json))
+
+	rdata := map[string]string{}
+	rdata["status"] = "OK"
+	w.Write([]byte(model.MapToJson(rdata)))
+}
+
+func recycleDatabaseConnection(c *Context, w http.ResponseWriter, r *http.Request) {
+	if !c.HasSystemAdminPermissions("recycleDatabaseConnection") {
+		return
+	}
+
+	oldStore := Srv.Store
+
+	l4g.Warn(utils.T("api.admin.recycle_db_start.warn"))
+	Srv.Store = store.NewSqlStore()
+
+	time.Sleep(20 * time.Second)
+	oldStore.Close()
+
+	l4g.Warn(utils.T("api.admin.recycle_db_end.warn"))
+
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	ReturnStatusOK(w)
 }
 
 func testEmail(c *Context, w http.ResponseWriter, r *http.Request) {
@@ -171,6 +181,11 @@ func testEmail(c *Context, w http.ResponseWriter, r *http.Request) {
 	cfg := model.ConfigFromJson(r.Body)
 	if cfg == nil {
 		c.SetInvalidParam("testEmail", "config")
+		return
+	}
+
+	if len(utils.Cfg.EmailSettings.SMTPServer) == 0 {
+		c.Err = model.NewLocAppError("testEmail", "api.admin.test_email.missing_server", nil, utils.T("api.context.invalid_param.app_error", map[string]interface{}{"Name": "SMTPServer"}))
 		return
 	}
 
@@ -374,7 +389,7 @@ func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
 		iHookChan := Srv.Store.Webhook().AnalyticsIncomingCount(teamId)
 		oHookChan := Srv.Store.Webhook().AnalyticsOutgoingCount(teamId)
 		commandChan := Srv.Store.Command().AnalyticsCommandCount(teamId)
-		sessionChan := Srv.Store.Session().AnalyticsSessionCount(teamId)
+		sessionChan := Srv.Store.Session().AnalyticsSessionCount()
 
 		if r := <-fileChan; r.Err != nil {
 			c.Err = r.Err
@@ -432,13 +447,13 @@ func uploadBrandImage(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.ContentLength > model.MAX_FILE_SIZE {
+	if r.ContentLength > *utils.Cfg.FileSettings.MaxFileSize {
 		c.Err = model.NewLocAppError("uploadBrandImage", "api.admin.upload_brand_image.too_large.app_error", nil, "")
 		c.Err.StatusCode = http.StatusRequestEntityTooLarge
 		return
 	}
 
-	if err := r.ParseMultipartForm(model.MAX_FILE_SIZE); err != nil {
+	if err := r.ParseMultipartForm(*utils.Cfg.FileSettings.MaxFileSize); err != nil {
 		c.Err = model.NewLocAppError("uploadBrandImage", "api.admin.upload_brand_image.parse.app_error", nil, "")
 		return
 	}
@@ -497,4 +512,52 @@ func getBrandImage(c *Context, w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 		w.Write(img)
 	}
+}
+
+func adminResetMfa(c *Context, w http.ResponseWriter, r *http.Request) {
+	props := model.MapFromJson(r.Body)
+
+	userId := props["user_id"]
+	if len(userId) != 26 {
+		c.SetInvalidParam("adminResetMfa", "user_id")
+		return
+	}
+
+	if err := DeactivateMfa(userId); err != nil {
+		c.Err = err
+		return
+	}
+
+	c.LogAudit("")
+
+	rdata := map[string]string{}
+	rdata["status"] = "ok"
+	w.Write([]byte(model.MapToJson(rdata)))
+}
+
+func adminResetPassword(c *Context, w http.ResponseWriter, r *http.Request) {
+	props := model.MapFromJson(r.Body)
+
+	userId := props["user_id"]
+	if len(userId) != 26 {
+		c.SetInvalidParam("adminResetPassword", "user_id")
+		return
+	}
+
+	newPassword := props["new_password"]
+	if len(newPassword) < model.MIN_PASSWORD_LENGTH {
+		c.SetInvalidParam("adminResetPassword", "new_password")
+		return
+	}
+
+	if err := ResetPassword(c, userId, newPassword); err != nil {
+		c.Err = err
+		return
+	}
+
+	c.LogAudit("")
+
+	rdata := map[string]string{}
+	rdata["status"] = "ok"
+	w.Write([]byte(model.MapToJson(rdata)))
 }

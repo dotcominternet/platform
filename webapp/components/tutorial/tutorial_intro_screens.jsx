@@ -1,12 +1,12 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
-import $ from 'jquery';
 import UserStore from 'stores/user_store.jsx';
 import TeamStore from 'stores/team_store.jsx';
 import PreferenceStore from 'stores/preference_store.jsx';
 import * as Utils from 'utils/utils.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
 
 import Constants from 'utils/constants.jsx';
 
@@ -34,12 +34,6 @@ export default class TutorialIntroScreens extends React.Component {
         this.createCircles = this.createCircles.bind(this);
 
         this.state = {currentScreen: 0};
-    }
-    componentDidMount() {
-        $('body').addClass('app__body');
-    }
-    componentWillUnmount() {
-        $('body').removeClass('app__body');
     }
     handleNext() {
         if (this.state.currentScreen < 2) {
@@ -113,13 +107,13 @@ export default class TutorialIntroScreens extends React.Component {
     createScreenThree() {
         const team = TeamStore.getCurrent();
         let inviteModalLink;
+
         if (team.type === Constants.INVITE_TEAM) {
             inviteModalLink = (
                 <a
                     className='intro-links'
                     href='#'
-                    data-toggle='modal'
-                    data-target='#invite_member'
+                    onClick={GlobalActions.showInviteMemberModal}
                 >
                     <FormattedMessage
                         id='tutorial_intro.invite'
@@ -132,14 +126,11 @@ export default class TutorialIntroScreens extends React.Component {
                 <a
                     className='intro-links'
                     href='#'
-                    data-toggle='modal'
-                    data-target='#get_link'
-                    data-title='Team Invite'
-                    data-value={Utils.getWindowLocationOrigin() + '/signup_user_complete/?id=' + team.id}
+                    onClick={GlobalActions.showGetTeamInviteLinkModal}
                 >
                     <FormattedMessage
                         id='tutorial_intro.teamInvite'
-                        defaultMessage='Team Invite'
+                        defaultMessage='Invite teammates'
                     />
                 </a>
             );
@@ -158,6 +149,7 @@ export default class TutorialIntroScreens extends React.Component {
                     <a
                         href={'mailto:' + global.window.mm_config.SupportEmail}
                         target='_blank'
+                        rel='noopener noreferrer'
                     >
                         {global.window.mm_config.SupportEmail}
                     </a>

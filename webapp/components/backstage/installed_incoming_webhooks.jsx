@@ -5,6 +5,8 @@ import React from 'react';
 
 import * as AsyncClient from 'utils/async_client.jsx';
 import IntegrationStore from 'stores/integration_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
+import * as Utils from 'utils/utils.jsx';
 
 import {FormattedMessage} from 'react-intl';
 import InstalledIncomingWebhook from './installed_incoming_webhook.jsx';
@@ -18,22 +20,19 @@ export default class InstalledIncomingWebhooks extends React.Component {
 
         this.deleteIncomingWebhook = this.deleteIncomingWebhook.bind(this);
 
+        const teamId = TeamStore.getCurrentId();
+
         this.state = {
-            incomingWebhooks: []
+            incomingWebhooks: IntegrationStore.getIncomingWebhooks(teamId),
+            loading: !IntegrationStore.hasReceivedIncomingWebhooks(teamId)
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         IntegrationStore.addChangeListener(this.handleIntegrationChange);
 
         if (window.mm_config.EnableIncomingWebhooks === 'true') {
-            if (IntegrationStore.hasReceivedIncomingWebhooks()) {
-                this.setState({
-                    incomingWebhooks: IntegrationStore.getIncomingWebhooks()
-                });
-            } else {
-                AsyncClient.listIncomingHooks();
-            }
+            AsyncClient.listIncomingHooks();
         }
     }
 
@@ -42,8 +41,11 @@ export default class InstalledIncomingWebhooks extends React.Component {
     }
 
     handleIntegrationChange() {
+        const teamId = TeamStore.getCurrentId();
+
         this.setState({
-            incomingWebhooks: IntegrationStore.getIncomingWebhooks()
+            incomingWebhooks: IntegrationStore.getIncomingWebhooks(teamId),
+            loading: !IntegrationStore.hasReceivedIncomingWebhooks(teamId)
         });
     }
 
@@ -76,7 +78,14 @@ export default class InstalledIncomingWebhooks extends React.Component {
                         defaultMessage='Add Incoming Webhook'
                     />
                 }
-                addLink='/settings/integrations/incoming_webhooks/add'
+                addLink={'/' + Utils.getTeamNameFromUrl() + '/settings/integrations/incoming_webhooks/add'}
+                emptyText={
+                    <FormattedMessage
+                        id='installed_incoming_webhooks.empty'
+                        defaultMessage='No incoming webhooks found'
+                    />
+                }
+                loading={this.state.loading}
             >
                 {incomingWebhooks}
             </InstalledIntegrations>

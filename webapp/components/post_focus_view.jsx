@@ -5,10 +5,7 @@ import PostsView from './posts_view.jsx';
 
 import PostStore from 'stores/post_store.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
-import UserStore from 'stores/user_store.jsx';
-import * as GlobalActions from 'action_creators/global_actions.jsx';
-
-import {FormattedMessage} from 'react-intl';
+import * as GlobalActions from 'actions/global_actions.jsx';
 
 import React from 'react';
 
@@ -18,7 +15,6 @@ export default class PostFocusView extends React.Component {
 
         this.onChannelChange = this.onChannelChange.bind(this);
         this.onPostsChange = this.onPostsChange.bind(this);
-        this.onUserChange = this.onUserChange.bind(this);
         this.handlePostsViewScroll = this.handlePostsViewScroll.bind(this);
         this.loadMorePostsTop = this.loadMorePostsTop.bind(this);
         this.loadMorePostsBottom = this.loadMorePostsBottom.bind(this);
@@ -27,34 +23,32 @@ export default class PostFocusView extends React.Component {
 
         this.state = {
             scrollType: PostsView.SCROLL_TYPE_POST,
+            currentChannel: ChannelStore.getCurrentId().slice(),
             scrollPostId: focusedPostId,
             postList: PostStore.getVisiblePosts(focusedPostId),
             atTop: PostStore.getVisibilityAtTop(focusedPostId),
-            atBottom: PostStore.getVisibilityAtBottom(focusedPostId),
-            currentUser: UserStore.getCurrentUser()
+            atBottom: PostStore.getVisibilityAtBottom(focusedPostId)
         };
     }
 
     componentDidMount() {
         ChannelStore.addChangeListener(this.onChannelChange);
         PostStore.addChangeListener(this.onPostsChange);
-        UserStore.addChangeListener(this.onUserChange);
     }
 
     componentWillUnmount() {
         ChannelStore.removeChangeListener(this.onChannelChange);
         PostStore.removeChangeListener(this.onPostsChange);
-        UserStore.removeChangeListener(this.onUserChange);
     }
 
     onChannelChange() {
-        this.setState({
-            scrollType: PostsView.SCROLL_TYPE_POST
-        });
-    }
-
-    onUserChange() {
-        this.setState({currentUser: UserStore.getCurrentUser()});
+        const currentChannel = ChannelStore.getCurrentId();
+        if (this.state.currentChannel !== currentChannel) {
+            this.setState({
+                currentChannel: currentChannel.slice(),
+                scrollType: PostsView.SCROLL_TYPE_POST
+            });
+        }
     }
 
     onPostsChange() {
@@ -83,24 +77,11 @@ export default class PostFocusView extends React.Component {
         GlobalActions.emitLoadMorePostsFocusedBottomEvent();
     }
 
-    getIntroMessage() {
-        return (
-            <div className='channel-intro'>
-                <h4 className='channel-intro__title'>
-                    <FormattedMessage
-                        id='post_focus_view.beginning'
-                        defaultMessage='Beginning of Channel Archives'
-                    />
-                </h4>
-            </div>
-        );
-    }
-
     render() {
         const postsToHighlight = {};
         postsToHighlight[this.state.scrollPostId] = true;
 
-        if (!this.state.currentUser || !this.state.postList) {
+        if (!this.state.postList) {
             return null;
         }
 
@@ -117,19 +98,10 @@ export default class PostFocusView extends React.Component {
                     loadMorePostsBottomClicked={this.loadMorePostsBottom}
                     showMoreMessagesTop={!this.state.atTop}
                     showMoreMessagesBottom={!this.state.atBottom}
-                    introText={this.getIntroMessage()}
                     messageSeparatorTime={0}
                     postsToHighlight={postsToHighlight}
-                    profiles={this.props.profiles}
-                    currentUser={this.state.currentUser}
                 />
             </div>
         );
     }
 }
-PostFocusView.defaultProps = {
-};
-
-PostFocusView.propTypes = {
-    profiles: React.PropTypes.object
-};

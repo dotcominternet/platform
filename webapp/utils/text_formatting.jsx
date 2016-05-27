@@ -2,10 +2,12 @@
 // See License.txt for license information.
 
 import Autolinker from 'autolinker';
+import {browserHistory} from 'react-router';
 import Constants from './constants.jsx';
 import * as Emoticons from './emoticons.jsx';
 import * as Markdown from './markdown.jsx';
 import UserStore from 'stores/user_store.jsx';
+import twemoji from 'twemoji';
 import * as Utils from './utils.jsx';
 
 // Performs formatting of user posts including highlighting mentions and search terms and converting urls, hashtags, and
@@ -56,6 +58,22 @@ export function doFormatText(text, options) {
 
     if (!('mentionHighlight' in options) || options.mentionHighlight) {
         output = highlightCurrentMentions(output, tokens);
+    }
+
+    if (!('emoticons' in options) || options.emoticon) {
+        output = twemoji.parse(output, {
+            className: 'emoticon',
+            base: '',
+            folder: Constants.EMOJI_PATH,
+            callback: (icon, twemojiOptions) => {
+                if (!Emoticons.getEmoticonsByCodePoint().has(icon)) {
+                    // just leave the unicode characters and hope the browser can handle it
+                    return null;
+                }
+
+                return ''.concat(twemojiOptions.base, twemojiOptions.size, '/', icon, twemojiOptions.ext);
+            }
+        });
     }
 
     // reinsert tokens with formatted versions of the important words and phrases
@@ -213,7 +231,6 @@ function highlightCurrentMentions(text, tokens) {
     }
 
     for (const mention of UserStore.getCurrentMentionKeys()) {
-        // occasionally we get an empty mention which matches a bunch of empty strings
         if (!mention) {
             continue;
         }
@@ -301,7 +318,7 @@ function parseSearchTerms(searchTerm) {
             termString = termString.substring(captured[0].length);
 
             // break the text up into words based on how the server splits them in SqlPostStore.SearchPosts and then discard empty terms
-            terms.push(...captured[0].split(/[ <>+\-\(\)\~\@]/).filter((term) => !!term));
+            terms.push(...captured[0].split(/[ <>+\-\(\)~@]/).filter((term) => !!term));
             continue;
         }
 
@@ -398,10 +415,13 @@ function replaceNewlines(text) {
 export function handleClick(e) {
     const mentionAttribute = e.target.getAttributeNode('data-mention');
     const hashtagAttribute = e.target.getAttributeNode('data-hashtag');
+    const linkAttribute = e.target.getAttributeNode('data-link');
 
     if (mentionAttribute) {
         Utils.searchForTerm(mentionAttribute.value);
     } else if (hashtagAttribute) {
         Utils.searchForTerm(hashtagAttribute.value);
+    } else if (linkAttribute) {
+        browserHistory.push(linkAttribute.value);
     }
 }

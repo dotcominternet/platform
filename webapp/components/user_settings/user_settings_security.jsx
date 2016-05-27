@@ -10,12 +10,12 @@ import ToggleModalButton from '../toggle_modal_button.jsx';
 
 import TeamStore from 'stores/team_store.jsx';
 
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
 import * as Utils from 'utils/utils.jsx';
 import Constants from 'utils/constants.jsx';
 
-import {intlShape, injectIntl, defineMessages, FormattedMessage, FormattedTime, FormattedDate} from 'react-intl';
+import {intlShape, injectIntl, defineMessages, FormattedMessage, FormattedHTMLMessage, FormattedTime, FormattedDate} from 'react-intl';
 import {Link} from 'react-router';
 
 const holders = defineMessages({
@@ -96,12 +96,10 @@ class SecurityTab extends React.Component {
             return;
         }
 
-        var data = {};
-        data.user_id = user.id;
-        data.current_password = currentPassword;
-        data.new_password = newPassword;
-
-        Client.updatePassword(data,
+        Client.updatePassword(
+            user.id,
+            currentPassword,
+            newPassword,
             () => {
                 this.props.updateSection('');
                 AsyncClient.getMe();
@@ -120,11 +118,9 @@ class SecurityTab extends React.Component {
         );
     }
     activateMfa() {
-        const data = {};
-        data.activate = true;
-        data.token = this.state.mfaToken;
-
-        Client.updateMfa(data,
+        Client.updateMfa(
+            this.state.mfaToken,
+            true,
             () => {
                 this.props.updateSection('');
                 AsyncClient.getMe();
@@ -143,10 +139,9 @@ class SecurityTab extends React.Component {
         );
     }
     deactivateMfa() {
-        const data = {};
-        data.activate = false;
-
-        Client.updateMfa(data,
+        Client.updateMfa(
+            '',
+            false,
             () => {
                 this.props.updateSection('');
                 AsyncClient.getMe();
@@ -215,32 +210,36 @@ class SecurityTab extends React.Component {
             } else if (this.state.mfaShowQr) {
                 content = (
                     <div key='mfaButton'>
-                        <label className='col-sm-5 control-label'>
-                            <FormattedMessage
-                                id='user.settings.mfa.qrCode'
-                                defaultMessage='QR Code'
-                            />
-                        </label>
-                        <div className='col-sm-7'>
-                            <img
-                                className='qr-code-img'
-                                src={'/api/v1/users/generate_mfa_qr?time=' + this.props.user.update_at}
-                            />
+                        <div className='form-group'>
+                            <label className='col-sm-5 control-label'>
+                                <FormattedMessage
+                                    id='user.settings.mfa.qrCode'
+                                    defaultMessage='Bar Code'
+                                />
+                            </label>
+                            <div className='col-sm-7'>
+                                <img
+                                    className='qr-code-img'
+                                    src={Client.getUsersRoute() + '/generate_mfa_qr?time=' + this.props.user.update_at}
+                                />
+                            </div>
                         </div>
-                        <br/>
-                        <label className='col-sm-5 control-label'>
-                            <FormattedMessage
-                                id='user.settings.mfa.enterToken'
-                                defaultMessage='Token'
-                            />
-                        </label>
-                        <div className='col-sm-7'>
-                            <input
-                                className='form-control'
-                                type='text'
-                                onChange={this.updateMfaToken}
-                                value={this.state.mfaToken}
-                            />
+                        <div className='form-group'>
+                            <label className='col-sm-5 control-label'>
+                                <FormattedMessage
+                                    id='user.settings.mfa.enterToken'
+                                    defaultMessage='Token (numbers only)'
+                                />
+                            </label>
+                            <div className='col-sm-7'>
+                                <input
+                                    className='form-control'
+                                    type='number'
+                                    autoFocus={true}
+                                    onChange={this.updateMfaToken}
+                                    value={this.state.mfaToken}
+                                />
+                            </div>
                         </div>
                     </div>
                 );
@@ -274,9 +273,9 @@ class SecurityTab extends React.Component {
 
                 extraInfo = (
                     <span>
-                        <FormattedMessage
+                        <FormattedHTMLMessage
                             id='user.settings.mfa.addHelp'
-                            defaultMessage='To add multi-factor authentication to your account you must have a smartphone with Google Authenticator installed.'
+                            defaultMessage="You can require a smartphone-based token, in addition to your password, to sign into Mattermost.<br/><br/>To enable, download Google Authenticator from <a target='_blank' href='https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8'>iTunes</a> or <a target='_blank' href='https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en'>Google Play</a> for your phone, then<br/><br/>1. Click the <strong>Add MFA to your account</strong> button above.<br/>2. Use Google Authenticator to scan the QR code that appears.<br/>3. Type in the Token generated by Google Authenticator and click <strong>Save</strong>.<br/><br/>When logging in, you will be asked to enter a token from Google Authenticator in addition to your regular credentials."
                         />
                     </span>
                 );
@@ -531,9 +530,9 @@ class SecurityTab extends React.Component {
             if (global.window.mm_config.EnableSignUpWithEmail === 'true' && user.auth_service !== '') {
                 let link;
                 if (user.auth_service === Constants.LDAP_SERVICE) {
-                    link = '/' + teamName + '/claim/ldap_to_email?email=' + encodeURIComponent(user.email);
+                    link = '/claim/ldap_to_email?email=' + encodeURIComponent(user.email);
                 } else {
-                    link = '/' + teamName + '/claim/oauth_to_email?email=' + encodeURIComponent(user.email) + '&old_type=' + user.auth_service;
+                    link = '/claim/oauth_to_email?email=' + encodeURIComponent(user.email) + '&old_type=' + user.auth_service;
                 }
 
                 emailOption = (
@@ -558,7 +557,7 @@ class SecurityTab extends React.Component {
                     <div>
                         <Link
                             className='btn btn-primary'
-                            to={'/' + teamName + '/claim/email_to_oauth?email=' + encodeURIComponent(user.email) + '&old_type=' + user.auth_service + '&new_type=' + Constants.GITLAB_SERVICE}
+                            to={'/claim/email_to_oauth?email=' + encodeURIComponent(user.email) + '&old_type=' + user.auth_service + '&new_type=' + Constants.GITLAB_SERVICE}
                         >
                             <FormattedMessage
                                 id='user.settings.security.switchGitlab'
@@ -594,7 +593,7 @@ class SecurityTab extends React.Component {
                     <div>
                         <Link
                             className='btn btn-primary'
-                            to={'/' + teamName + '/claim/email_to_ldap?email=' + encodeURIComponent(user.email)}
+                            to={'/claim/email_to_ldap?email=' + encodeURIComponent(user.email)}
                         >
                             <FormattedMessage
                                 id='user.settings.security.switchLdap'
@@ -609,11 +608,11 @@ class SecurityTab extends React.Component {
             const inputs = [];
             inputs.push(
                 <div key='userSignInOption'>
-                   {emailOption}
-                   {gitlabOption}
-                   <br/>
-                   {ldapOption}
-                   {googleOption}
+                    {emailOption}
+                    {gitlabOption}
+                    <br/>
+                    {ldapOption}
+                    {googleOption}
                 </div>
             );
 
@@ -658,6 +657,13 @@ class SecurityTab extends React.Component {
                 <FormattedMessage
                     id='user.settings.security.gitlab'
                     defaultMessage='GitLab SSO'
+                />
+            );
+        } else if (this.props.user.auth_service === Constants.LDAP_SERVICE) {
+            describe = (
+                <FormattedMessage
+                    id='user.settings.security.ldap'
+                    defaultMessage='LDAP'
                 />
             );
         }

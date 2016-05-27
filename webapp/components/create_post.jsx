@@ -10,9 +10,8 @@ import PostDeletedModal from './post_deleted_modal.jsx';
 import TutorialTip from './tutorial/tutorial_tip.jsx';
 
 import AppDispatcher from '../dispatcher/app_dispatcher.jsx';
-import * as GlobalActions from 'action_creators/global_actions.jsx';
-import * as Client from 'utils/client.jsx';
-import * as AsyncClient from 'utils/async_client.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
+import Client from 'utils/web_client.jsx';
 import * as Utils from 'utils/utils.jsx';
 
 import ChannelStore from 'stores/channel_store.jsx';
@@ -78,11 +77,13 @@ class CreatePost extends React.Component {
         this.state = {
             channelId: ChannelStore.getCurrentId(),
             messageText: draft.messageText,
+            lastMessage: '',
             uploadsInProgress: draft.uploadsInProgress,
             previews: draft.previews,
             submitting: false,
             initialText: draft.messageText,
             ctrlSend: false,
+            centerTextbox: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_CENTERED,
             showTutorialTip: false,
             showPostDeletedModal: false
         };
@@ -126,7 +127,7 @@ class CreatePost extends React.Component {
         }
 
         this.setState({submitting: true, serverError: null});
-
+        this.setState({lastMessage: this.state.messageText});
         if (post.message.indexOf('/') === 0) {
             Client.executeCommand(
                 this.state.channelId,
@@ -166,21 +167,12 @@ class CreatePost extends React.Component {
         post.create_at = time;
         post.parent_id = this.state.parentId;
 
-        const channel = ChannelStore.get(this.state.channelId);
-
         GlobalActions.emitUserPostedEvent(post);
         this.setState({messageText: '', submitting: false, postError: null, previews: [], serverError: null});
 
-        Client.createPost(post, channel,
-            (data) => {
-                AsyncClient.getPosts();
-
-                const member = ChannelStore.getMember(channel.id);
-                member.msg_count = channel.total_msg_count;
-                member.last_viewed_at = Date.now();
-                ChannelStore.setChannelMember(member);
-
-                GlobalActions.emitPostRecievedEvent(data);
+        Client.createPost(post,
+            () => {
+                // DO nothing. Websockets will handle this.
             },
             (err) => {
                 if (err.id === 'api.post.create_post.root_id.app_error') {
@@ -252,9 +244,11 @@ class CreatePost extends React.Component {
         draft.previews = draft.previews.concat(filenames);
         PostStore.storeDraft(channelId, draft);
 
-        this.setState({uploadsInProgress: draft.uploadsInProgress, previews: draft.previews});
+        if (channelId === this.state.channelId) {
+            this.setState({uploadsInProgress: draft.uploadsInProgress, previews: draft.previews});
+        }
     }
-    handleUploadError(err, clientId) {
+    handleUploadError(err, clientId, channelId) {
         let message = err;
         if (message && typeof message !== 'string') {
             // err is an AppError from the server
@@ -262,16 +256,18 @@ class CreatePost extends React.Component {
         }
 
         if (clientId !== -1) {
-            const draft = PostStore.getDraft(this.state.channelId);
+            const draft = PostStore.getDraft(channelId);
 
             const index = draft.uploadsInProgress.indexOf(clientId);
             if (index !== -1) {
                 draft.uploadsInProgress.splice(index, 1);
             }
 
-            PostStore.storeDraft(this.state.channelId, draft);
+            PostStore.storeDraft(channelId, draft);
 
-            this.setState({uploadsInProgress: draft.uploadsInProgress});
+            if (channelId === this.state.channelId) {
+                this.setState({uploadsInProgress: draft.uploadsInProgress});
+            }
         }
 
         this.setState({serverError: message});
@@ -305,7 +301,8 @@ class CreatePost extends React.Component {
 
         // wait to load these since they may have changed since the component was constructed (particularly in the case of skipping the tutorial)
         this.setState({
-            ctrlSend: PreferenceStore.getBool(Constants.Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter'),
+            ctrlSend: PreferenceStore.getBool(Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter'),
+            centerTextbox: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_CENTERED,
             showTutorialTip: tutorialStep === TutorialSteps.POST_POPOVER
         });
     }
@@ -336,7 +333,8 @@ class CreatePost extends React.Component {
         const tutorialStep = PreferenceStore.getInt(Preferences.TUTORIAL_STEP, UserStore.getCurrentId(), 999);
         this.setState({
             showTutorialTip: tutorialStep === TutorialSteps.POST_POPOVER,
-            ctrlSend: PreferenceStore.getBool(Constants.Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter')
+            ctrlSend: PreferenceStore.getBool(Preferences.CATEGORY_ADVANCED_SETTINGS, 'send_on_ctrl_enter'),
+            centerTextbox: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_CENTERED
         });
     }
     getFileCount(channelId) {
@@ -353,7 +351,7 @@ class CreatePost extends React.Component {
             return;
         }
 
-        if (e.keyCode === KeyCodes.UP && this.state.messageText === '') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.keyCode === KeyCodes.UP && this.state.messageText === '') {
             e.preventDefault();
 
             const channelId = ChannelStore.getCurrentId();
@@ -373,6 +371,19 @@ class CreatePost extends React.Component {
                 channelId: lastPost.channel_id,
                 comments: PostStore.getCommentCount(lastPost)
             });
+        }
+
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.keyCode === KeyCodes.UP) {
+            const channelId = ChannelStore.getCurrentId();
+            const lastPost = PostStore.getCurrentUsersLatestPost(channelId);
+            if (!lastPost) {
+                return;
+            }
+            let message = lastPost.message;
+            if (this.state.lastMessage !== '') {
+                message = this.state.lastMessage;
+            }
+            this.setState({messageText: message});
         }
     }
     showPostDeletedModal() {
@@ -441,11 +452,17 @@ class CreatePost extends React.Component {
             tutorialTip = this.createTutorialTip();
         }
 
+        let centerClass = '';
+        if (this.state.centerTextbox) {
+            centerClass = 'center';
+        }
+
         return (
             <form
                 id='create_post'
                 ref='topDiv'
                 role='form'
+                className={centerClass}
                 onSubmit={this.handleSubmit}
             >
                 <div className='post-create'>

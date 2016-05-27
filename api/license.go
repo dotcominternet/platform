@@ -5,22 +5,26 @@ package api
 
 import (
 	"bytes"
-	l4g "github.com/alecthomas/log4go"
-	"github.com/dotcominternet/platform/model"
-	"github.com/dotcominternet/platform/utils"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strings"
+
+	l4g "github.com/alecthomas/log4go"
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 )
 
-func InitLicense(r *mux.Router) {
+const (
+	EXPIRED_LICENSE_ERROR = "api.license.add_license.expired.app_error"
+	INVALID_LICENSE_ERROR = "api.license.add_license.invalid.app_error"
+)
+
+func InitLicense() {
 	l4g.Debug(utils.T("api.license.init.debug"))
 
-	sr := r.PathPrefix("/license").Subrouter()
-	sr.Handle("/add", ApiAdminSystemRequired(addLicense)).Methods("POST")
-	sr.Handle("/remove", ApiAdminSystemRequired(removeLicense)).Methods("POST")
-	sr.Handle("/client_config", ApiAppHandler(getClientLicenceConfig)).Methods("GET")
+	BaseRoutes.License.Handle("/add", ApiAdminSystemRequired(addLicense)).Methods("POST")
+	BaseRoutes.License.Handle("/remove", ApiAdminSystemRequired(removeLicense)).Methods("POST")
+	BaseRoutes.License.Handle("/client_config", ApiAppHandler(getClientLicenceConfig)).Methods("GET")
 }
 
 func LoadLicense() {
@@ -45,7 +49,7 @@ func LoadLicense() {
 
 func addLicense(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAudit("attempt")
-	err := r.ParseMultipartForm(model.MAX_FILE_SIZE)
+	err := r.ParseMultipartForm(*utils.Cfg.FileSettings.MaxFileSize)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -78,33 +82,45 @@ func addLicense(c *Context, w http.ResponseWriter, r *http.Request) {
 	buf := bytes.NewBuffer(nil)
 	io.Copy(buf, file)
 
-	data := buf.Bytes()
+	if license, err := SaveLicense(buf.Bytes()); err != nil {
+		if err.Id == EXPIRED_LICENSE_ERROR {
+			c.LogAudit("failed - expired or non-started license")
+		} else if err.Id == INVALID_LICENSE_ERROR {
+			c.LogAudit("failed - invalid license")
+		} else {
+			c.LogAudit("failed - unable to save license")
+		}
+		c.Err = err
+		return
+	} else {
+		c.LogAudit("success")
+		w.Write([]byte(license.ToJson()))
+	}
+}
 
+func SaveLicense(licenseBytes []byte) (*model.License, *model.AppError) {
 	var license *model.License
-	if success, licenseStr := utils.ValidateLicense(data); success {
+
+	if success, licenseStr := utils.ValidateLicense(licenseBytes); success {
 		license = model.LicenseFromJson(strings.NewReader(licenseStr))
 
 		if result := <-Srv.Store.User().AnalyticsUniqueUserCount(""); result.Err != nil {
-			c.Err = model.NewLocAppError("addLicense", "api.license.add_license.invalid_count.app_error", nil, result.Err.Error())
-			return
+			return nil, model.NewLocAppError("addLicense", "api.license.add_license.invalid_count.app_error", nil, result.Err.Error())
 		} else {
 			uniqueUserCount := result.Data.(int64)
 
 			if uniqueUserCount > int64(*license.Features.Users) {
-				c.Err = model.NewLocAppError("addLicense", "api.license.add_license.unique_users.app_error", map[string]interface{}{"Users": *license.Features.Users, "Count": uniqueUserCount}, "")
-				return
+				return nil, model.NewLocAppError("addLicense", "api.license.add_license.unique_users.app_error", map[string]interface{}{"Users": *license.Features.Users, "Count": uniqueUserCount}, "")
 			}
 		}
 
 		if ok := utils.SetLicense(license); !ok {
-			c.LogAudit("failed - expired or non-started license")
-			c.Err = model.NewLocAppError("addLicense", "api.license.add_license.expired.app_error", nil, "")
-			return
+			return nil, model.NewLocAppError("addLicense", EXPIRED_LICENSE_ERROR, nil, "")
 		}
 
 		record := &model.LicenseRecord{}
 		record.Id = license.Id
-		record.Bytes = string(data)
+		record.Bytes = string(licenseBytes)
 		rchan := Srv.Store.License().Save(record)
 
 		sysVar := &model.System{}
@@ -113,37 +129,26 @@ func addLicense(c *Context, w http.ResponseWriter, r *http.Request) {
 		schan := Srv.Store.System().SaveOrUpdate(sysVar)
 
 		if result := <-rchan; result.Err != nil {
-			c.Err = model.NewLocAppError("addLicense", "api.license.add_license.save.app_error", nil, "err="+result.Err.Error())
-			utils.RemoveLicense()
-			return
+			RemoveLicense()
+			return nil, model.NewLocAppError("addLicense", "api.license.add_license.save.app_error", nil, "err="+result.Err.Error())
 		}
 
 		if result := <-schan; result.Err != nil {
-			c.Err = model.NewLocAppError("addLicense", "api.license.add_license.save_active.app_error", nil, "")
-			utils.RemoveLicense()
-			return
+			RemoveLicense()
+			return nil, model.NewLocAppError("addLicense", "api.license.add_license.save_active.app_error", nil, "")
 		}
 	} else {
-		c.LogAudit("failed - invalid license")
-		c.Err = model.NewLocAppError("addLicense", "api.license.add_license.invalid.app_error", nil, "")
-		return
+		return nil, model.NewLocAppError("addLicense", INVALID_LICENSE_ERROR, nil, "")
 	}
 
-	c.LogAudit("success")
-	w.Write([]byte(license.ToJson()))
+	return license, nil
 }
 
 func removeLicense(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAudit("")
 
-	utils.RemoveLicense()
-
-	sysVar := &model.System{}
-	sysVar.Name = model.SYSTEM_ACTIVE_LICENSE_ID
-	sysVar.Value = ""
-
-	if result := <-Srv.Store.System().Update(sysVar); result.Err != nil {
-		c.Err = model.NewLocAppError("removeLicense", "api.license.remove_license.update.app_error", nil, "")
+	if err := RemoveLicense(); err != nil {
+		c.Err = err
 		return
 	}
 
@@ -152,21 +157,29 @@ func removeLicense(c *Context, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(model.MapToJson(rdata)))
 }
 
-func getClientLicenceConfig(c *Context, w http.ResponseWriter, r *http.Request) {
-	config := utils.ClientLicense
+func RemoveLicense() *model.AppError {
+	utils.RemoveLicense()
 
-	var etag string
-	if config["IsLicensed"] == "false" {
-		etag = model.Etag(config["IsLicensed"])
-	} else {
-		etag = model.Etag(config["IsLicensed"], config["IssuedAt"])
+	sysVar := &model.System{}
+	sysVar.Name = model.SYSTEM_ACTIVE_LICENSE_ID
+	sysVar.Value = ""
+
+	if result := <-Srv.Store.System().SaveOrUpdate(sysVar); result.Err != nil {
+		utils.RemoveLicense()
+		return result.Err
 	}
 
+	return nil
+}
+
+func getClientLicenceConfig(c *Context, w http.ResponseWriter, r *http.Request) {
+	etag := utils.GetClientLicenseEtag()
 	if HandleEtag(etag, w, r) {
 		return
 	}
 
-	w.Header().Set(model.HEADER_ETAG_SERVER, etag)
+	clientLicense := utils.ClientLicense
 
-	w.Write([]byte(model.MapToJson(config)))
+	w.Header().Set(model.HEADER_ETAG_SERVER, etag)
+	w.Write([]byte(model.MapToJson(clientLicense)))
 }

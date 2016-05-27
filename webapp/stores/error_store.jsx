@@ -20,6 +20,12 @@ class ErrorStoreClass extends EventEmitter {
         this.removeChangeListener = this.removeChangeListener.bind(this);
         this.getLastError = this.getLastError.bind(this);
         this.storeLastError = this.storeLastError.bind(this);
+        this.getIgnoreEmailPreview = this.getIgnoreEmailPreview.bind(this);
+        this.ignore_email_preview = false;
+    }
+
+    getIgnoreEmailPreview() {
+        return this.ignore_email_preview;
     }
 
     emitChange() {
@@ -57,9 +63,24 @@ class ErrorStoreClass extends EventEmitter {
     }
 
     clearLastError() {
+        var lastError = this.getLastError();
+
+        // preview message can only be cleared by clearPreviewError
+        if (lastError && lastError.email_preview) {
+            return;
+        }
+
         BrowserStore.removeGlobalItem('last_error');
         BrowserStore.removeGlobalItem('last_error_conn');
-        this.emitChange();
+        if (lastError) {
+            this.emitChange();
+        }
+    }
+
+    clearPreviewError() {
+        this.ignore_email_preview = true;
+        this.storeLastError('');
+        this.clearLastError();
     }
 }
 

@@ -2,6 +2,7 @@
 // See License.txt for license information.
 
 import * as Utils from 'utils/utils.jsx';
+import Client from 'utils/web_client.jsx';
 
 import {FormattedMessage} from 'react-intl';
 
@@ -21,6 +22,25 @@ export default class UserProfile extends React.Component {
         super(props);
         this.uniqueId = nextId();
     }
+    shouldComponentUpdate(nextProps) {
+        if (!Utils.areObjectsEqual(nextProps.user, this.props.user)) {
+            return true;
+        }
+
+        if (nextProps.overwriteName !== this.props.overwriteName) {
+            return true;
+        }
+
+        if (nextProps.overwriteImage !== this.props.overwriteImage) {
+            return true;
+        }
+
+        if (nextProps.disablePopover !== this.props.disablePopover) {
+            return true;
+        }
+
+        return false;
+    }
     render() {
         let name = '...';
         let email = '';
@@ -28,7 +48,7 @@ export default class UserProfile extends React.Component {
         if (this.props.user) {
             name = Utils.displayUsername(this.props.user.id);
             email = this.props.user.email;
-            profileImg = '/api/v1/users/' + this.props.user.id + '/image?time=' + this.props.user.update_at;
+            profileImg = Client.getUsersRoute() + '/' + this.props.user.id + '/image?time=' + this.props.user.update_at;
         }
 
         if (this.props.overwriteName) {

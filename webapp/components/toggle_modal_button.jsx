@@ -15,7 +15,8 @@ export default class ModalToggleButton extends React.Component {
         };
     }
 
-    show() {
+    show(e) {
+        e.preventDefault();
         this.setState({show: true});
     }
 
@@ -24,20 +25,20 @@ export default class ModalToggleButton extends React.Component {
     }
 
     render() {
-        const {children, dialogType, dialogProps, onClick, ...props} = this.props; // eslint-disable-line no-use-before-define
+        const {children, dialogType, dialogProps, onClick, ...props} = this.props;
 
         // allow callers to provide an onClick which will be called before the modal is shown
         let clickHandler = this.show;
         if (onClick) {
-            clickHandler = () => {
+            clickHandler = (e) => {
                 onClick();
 
-                this.show();
+                this.show(e);
             };
         }
 
         // this assumes that all modals will have a show property and an onHide event
-        const dialog = React.createElement(this.props.dialogType, Object.assign({}, dialogProps, {
+        const dialog = React.createElement(dialogType, Object.assign({}, dialogProps, {
             show: this.state.show,
             onHide: () => {
                 this.hide();

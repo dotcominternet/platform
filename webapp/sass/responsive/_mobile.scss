@@ -1,6 +1,12 @@
 @charset 'UTF-8';
 
 @media screen and (max-width: 768px) {
+    .post-code__language {
+        @include opacity(.6);
+        @include transition(none);
+        display: block;
+    }
+
     .backstage-filters {
         display: block;
 
@@ -11,8 +17,26 @@
         }
     }
 
+    .compliance-panel,
+    .audit-panel {
+        .row {
+            > .form-group {
+                padding-left: 15px;
+            }
+        }
+    }
+
+    .user-popover {
+        pointer-events: none;
+    }
+
     .signup-team__container {
         font-size: 1em;
+    }
+
+    .sidebar--left .team__header .user__picture,
+    .sidebar--menu .team__header .user__picture {
+        display: none;
     }
 
     .date-separator.hovered--before:after,
@@ -22,7 +46,16 @@
         background: none !important;
     }
 
+    .channel-intro {
+        margin: 0 0 35px;
+    }
+
     .post {
+        &.post--compact {
+
+
+        }
+
         .post__dropdown {
             display: inline-block;
             height: 20px;
@@ -35,6 +68,27 @@
                 content: '...';
                 font-size: 20px;
                 top: -3px;
+            }
+        }
+
+        .post__content {
+            padding: 0 10px 0 0;
+        }
+
+        .post__header {
+            margin-bottom: 0;
+
+            .col__reply {
+                top: 0;
+                width: 65px;
+            }
+
+            .col__name {
+                pointer-events: none;
+
+                .user-popover {
+                    max-width: 130px;
+                }
             }
         }
 
@@ -63,7 +117,7 @@
         }
 
         .post__body {
-            width: calc(100% - 24px);
+            width: 100%;
         }
 
         .post__reply {
@@ -75,30 +129,31 @@
             }
         }
 
-        &.other--root .post__reply {
-            &.post__reply--hide {
-                visibility: hidden;
-            }
-        }
-
-        .post__header {
-            .col__reply {
-                width: 65px;
+        &.other--root {
+            &.post--comment {
+                .post__header {
+                    .col__reply {
+                        top: 0;
+                    }
+                }
             }
 
-            .col__name {
-                pointer-events: none;
-
-                .user-popover {
-                    max-width: 130px;
+            .post__reply {
+                &.post__reply--hide {
+                    visibility: hidden;
                 }
             }
         }
 
         &.same--root {
             &.same--user {
-                .post__time {
-                    display: none;
+                .post__header {
+                    height: auto;
+                    margin-top: 5px;
+
+                    .col__name {
+                        display: inline-block;
+                    }
                 }
             }
         }
@@ -227,7 +282,7 @@
     .signup-team__container {
         font-size: .9em;
         margin-bottom: 30px;
-        padding: 30px 0;
+        padding: 60px 10px 0;
 
         .signup-team__name {
             font-size: 2em;
@@ -714,10 +769,6 @@
         width: 100%;
         z-index: 5;
 
-        &.move--left {
-            @include translate3d(0, 0, 0);
-        }
-
         .sidebar__collapse,
         .sidebar__search-icon {
             display: block;
@@ -766,10 +817,11 @@
 
         &.move--left-small {
             @include translate3d(-290px, 0, 0);
+
             &:before {
-                z-index: 9999;
-                transition: background-color 0.5s ease;
                 background-color: rgba(0, 0, 0, 0.4);
+                transition: background-color 0.5s ease;
+                z-index: 9999;
             }
         }
 
@@ -777,6 +829,12 @@
             margin: 0;
             @include translate3d(-100%, 0, 0);
         }
+    }
+
+    .integration-option {
+        height: auto;
+        margin-left: 0;
+        width: 100%;
     }
 
     .app__content {
@@ -886,10 +944,6 @@
         }
     }
 
-    .add-integration {
-        width: 100%;
-    }
-
     .backstage-list__item {
         display: block;
 
@@ -963,12 +1017,19 @@
 
 @media screen and (max-height: 640px) {
     .signup-team__container {
-        padding: 30px 0;
-        margin-bottom: 30px;
         font-size: .9em;
+        margin-bottom: 30px;
 
         .signup-team__name {
             font-size: 2em;
+        }
+    }
+}
+
+@media screen and (max-width: 320px) {
+    .tip-overlay {
+        &.tip-overlay--sidebar {
+            min-height: 440px;
         }
     }
 }

@@ -9,8 +9,14 @@ import {FormattedRelative, FormattedDate} from 'react-intl';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 export default class TimeSince extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate.bind(this);
+    }
     componentDidMount() {
         this.intervalId = setInterval(() => {
             this.forceUpdate();
@@ -20,7 +26,7 @@ export default class TimeSince extends React.Component {
         clearInterval(this.intervalId);
     }
     render() {
-        if (this.props.sameUser) {
+        if (this.props.sameUser || this.props.compactDisplay) {
             return (
                 <time className='post__time'>
                     {Utils.displayTimeFormatted(this.props.eventTime)}
@@ -35,7 +41,7 @@ export default class TimeSince extends React.Component {
                     month='long'
                     day='numeric'
                     year='numeric'
-                    hour12={true}
+                    hour12={!Utils.isMilitaryTime()}
                     hour='numeric'
                     minute='2-digit'
                 />
@@ -63,5 +69,6 @@ TimeSince.defaultProps = {
 
 TimeSince.propTypes = {
     eventTime: React.PropTypes.number.isRequired,
-    sameUser: React.PropTypes.bool
+    sameUser: React.PropTypes.bool,
+    compactDisplay: React.PropTypes.bool
 };

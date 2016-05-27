@@ -5,7 +5,7 @@ import $ from 'jquery';
 import ReactDOM from 'react-dom';
 
 import Constants from 'utils/constants.jsx';
-import * as GlobalActions from 'action_creators/global_actions.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
 import SuggestionStore from 'stores/suggestion_store.jsx';
 import * as Utils from 'utils/utils.jsx';
 
@@ -110,6 +110,8 @@ export default class SuggestionBox extends React.Component {
             } else if (e.which === KeyCodes.ENTER || e.which === KeyCodes.TAB) {
                 GlobalActions.emitCompleteWordSuggestion(this.suggestionId);
                 e.preventDefault();
+            } else if (e.which === KeyCodes.ESCAPE) {
+                GlobalActions.emitClearSuggestions(this.suggestionId);
             } else if (this.props.onKeyDown) {
                 this.props.onKeyDown(e);
             }

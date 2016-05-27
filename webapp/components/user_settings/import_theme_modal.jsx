@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import ModalStore from 'stores/modal_store.jsx';
 import UserStore from 'stores/user_store.jsx';
 import * as Utils from 'utils/utils.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import {Modal} from 'react-bootstrap';
 
 import AppDispatcher from '../../dispatcher/app_dispatcher.jsx';
@@ -81,7 +81,7 @@ class ImportThemeModal extends React.Component {
         theme.mentionHighlightLink = '#2f81b7';
         theme.codeTheme = 'github';
 
-        let user = UserStore.getCurrentUser();
+        const user = UserStore.getCurrentUser();
         user.theme_props = theme;
 
         Client.updateUser(user,

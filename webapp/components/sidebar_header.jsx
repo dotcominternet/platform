@@ -7,6 +7,7 @@ import NavbarDropdown from './navbar_dropdown.jsx';
 import PreferenceStore from 'stores/preference_store.jsx';
 
 import * as Utils from 'utils/utils.jsx';
+import Client from 'utils/web_client.jsx';
 import Constants from 'utils/constants.jsx';
 
 const Preferences = Constants.Preferences;
@@ -61,7 +62,7 @@ export default class SidebarHeader extends React.Component {
             profilePicture = (
                 <img
                     className='user__picture'
-                    src={'/api/v1/users/' + me.id + '/image?time=' + me.update_at}
+                    src={Client.getUsersRoute() + '/' + me.id + '/image?time=' + me.update_at}
                 />
             );
         }
@@ -88,7 +89,7 @@ export default class SidebarHeader extends React.Component {
                             overlay={<Tooltip id='team-name__tooltip'>{this.props.teamDisplayName}</Tooltip>}
                             ref='descriptionOverlay'
                         >
-                        <div className='team__name'>{this.props.teamDisplayName}</div>
+                            <div className='team__name'>{this.props.teamDisplayName}</div>
                         </OverlayTrigger>
                     </div>
                 </a>

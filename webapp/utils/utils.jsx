@@ -10,9 +10,8 @@ import PreferenceStore from 'stores/preference_store.jsx';
 import TeamStore from 'stores/team_store.jsx';
 import Constants from 'utils/constants.jsx';
 var ActionTypes = Constants.ActionTypes;
-import * as Client from './client.jsx';
 import * as AsyncClient from './async_client.jsx';
-import * as client from './client.jsx';
+import Client from './web_client.jsx';
 
 import React from 'react';
 import {browserHistory} from 'react-router';
@@ -33,38 +32,6 @@ export function cleanUpUrlable(input) {
     cleaned = cleaned.replace(/^\-+/, '');
     cleaned = cleaned.replace(/\-+$/, '');
     return cleaned;
-}
-
-export function isTestDomain() {
-    if ((/^localhost/).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^dockerhost/).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^test/).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^127.0./).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^192.168./).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^10./).test(window.location.hostname)) {
-        return true;
-    }
-
-    if ((/^176./).test(window.location.hostname)) {
-        return true;
-    }
-
-    return false;
 }
 
 export function isChrome() {
@@ -482,7 +449,7 @@ export function replaceHtmlEntities(text) {
     };
     var newtext = text;
     for (var tag in tagsToReplace) {
-        if ({}.hasOwnProperty.call(tagsToReplace, tag)) {
+        if (Reflect.apply({}.hasOwnProperty, this, [tagsToReplace, tag])) {
             var regex = new RegExp(tag, 'g');
             newtext = newtext.replace(regex, tagsToReplace[tag]);
         }
@@ -498,7 +465,7 @@ export function insertHtmlEntities(text) {
     };
     var newtext = text;
     for (var tag in tagsToReplace) {
-        if ({}.hasOwnProperty.call(tagsToReplace, tag)) {
+        if (Reflect.apply({}.hasOwnProperty, this, [tagsToReplace, tag])) {
             var regex = new RegExp(tag, 'g');
             newtext = newtext.replace(regex, tagsToReplace[tag]);
         }
@@ -615,7 +582,7 @@ export function toTitleCase(str) {
 
 export function applyTheme(theme) {
     if (theme.sidebarBg) {
-        changeCss('.app__body .sidebar--left, .app__body .modal .settings-modal .settings-table .settings-links, .app__body .sidebar--menu', 'background:' + theme.sidebarBg, 1);
+        changeCss('.app__body .sidebar--left, .app__body .sidebar--left .sidebar__divider .sidebar__divider__text, .app__body .modal .settings-modal .settings-table .settings-links, .app__body .sidebar--menu', 'background:' + theme.sidebarBg, 1);
         changeCss('body.app__body', 'scrollbar-face-color:' + theme.sidebarBg, 3);
     }
 
@@ -639,6 +606,8 @@ export function applyTheme(theme) {
 
     if (theme.sidebarTextActiveBorder) {
         changeCss('.app__body .sidebar--left .nav li.active a:before, .app__body .modal .settings-modal .nav-pills>li.active a:before', 'background:' + theme.sidebarTextActiveBorder, 1);
+        changeCss('.app__body .sidebar--left .sidebar__divider:before', 'background:' + changeOpacity(theme.sidebarTextActiveBorder, 0.5), 1);
+        changeCss('.app__body .sidebar--left .sidebar__divider', 'color:' + theme.sidebarTextActiveBorder, 1);
     }
 
     if (theme.sidebarTextActiveColor) {
@@ -698,13 +667,14 @@ export function applyTheme(theme) {
         changeCss('.app__body .attachment__content', 'background:' + theme.centerChannelBg, 1);
         changeCss('body.app__body', 'scrollbar-face-color:' + theme.centerChannelBg, 2);
         changeCss('body.app__body', 'scrollbar-track-color:' + theme.centerChannelBg, 2);
+        changeCss('.app__body .post-list__new-messages-below', 'color:' + theme.centerChannelBg, 1);
     }
 
     if (theme.centerChannelColor) {
         changeCss('.app__body .post-list__arrows', 'fill:' + changeOpacity(theme.centerChannelColor, 0.3), 1);
         changeCss('.app__body .sidebar--left, .app__body .sidebar--right .sidebar--right__header, .app__body .suggestion-list__content .command', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.2), 1);
         changeCss('.app__body .app__content, .app__body .post-create__container .post-create-body .btn-file, .app__body .post-create__container .post-create-footer .msg-typing, .app__body .suggestion-list__content .command, .app__body .modal .modal-content, .app__body .dropdown-menu, .app__body .popover, .app__body .mentions__name, .app__body .tip-overlay', 'color:' + theme.centerChannelColor, 1);
-        changeCss('.app__body #archive-link-home', 'background:' + changeOpacity(theme.centerChannelColor, 0.15), 1);
+        changeCss('.app__body #archive-link-home, .video-div .video-thumbnail__error', 'background:' + changeOpacity(theme.centerChannelColor, 0.15), 1);
         changeCss('.app__body #post-create', 'color:' + theme.centerChannelColor, 2);
         changeCss('.app__body .mentions--top, .app__body .suggestion-list', 'box-shadow:' + changeOpacity(theme.centerChannelColor, 0.2) + ' 1px -3px 12px', 3);
         changeCss('.app__body .mentions--top, .app__body .suggestion-list', '-webkit-box-shadow:' + changeOpacity(theme.centerChannelColor, 0.2) + ' 1px -3px 12px', 2);
@@ -740,7 +710,7 @@ export function applyTheme(theme) {
         changeCss('.app__body .modal .custom-textarea:focus', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.3), 1);
         changeCss('.app__body .channel-intro, .app__body .modal .settings-modal .settings-table .settings-content .divider-dark, .app__body hr, .app__body .modal .settings-modal .settings-table .settings-links, .app__body .modal .settings-modal .settings-table .settings-content .appearance-section .theme-elements__header', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.2), 1);
         changeCss('.app__body .post.current--user .post__body, .app__body .post.post--comment.other--root.current--user .post-comment, .app__body pre, .app__body .post-right__container .post.post--root', 'background:' + changeOpacity(theme.centerChannelColor, 0.07), 1);
-        changeCss('.app__body .post.current--user .post__body, .app__body .post.post--comment.other--root.current--user .post-comment, .app__body .post.same--root.post--comment .post__body, .app__body .more-modal__list .more-modal__row, .app__body .member-div:first-child, .app__body .member-div, .app__body .access-history__table .access__report, .app__body .activity-log__table', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.1), 2);
+        changeCss('.app__body .post.post--comment.other--root.current--user .post-comment, .app__body .more-modal__list .more-modal__row, .app__body .member-div:first-child, .app__body .member-div, .app__body .access-history__table .access__report, .app__body .activity-log__table', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.1), 2);
         changeCss('@media(max-width: 1800px){.app__body .inner-wrap.move--left .post.post--comment.same--root', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.07), 2);
         changeCss('.app__body .post:hover, .app__body .more-modal__list .more-modal__row:hover, .app__body .modal .settings-modal .settings-table .settings-content .section-min:hover', 'background:' + changeOpacity(theme.centerChannelColor, 0.07), 1);
         changeCss('.app__body .date-separator.hovered--before:after, .app__body .date-separator.hovered--after:before, .app__body .new-separator.hovered--after:before, .app__body .new-separator.hovered--before:after', 'background:' + changeOpacity(theme.centerChannelColor, 0.07), 1);
@@ -754,6 +724,9 @@ export function applyTheme(theme) {
         changeCss('body', 'scrollbar-arrow-color:' + theme.centerChannelColor, 4);
         changeCss('.app__body .modal .about-modal .about-modal__logo svg, .app__body .post .post__img svg', 'fill:' + theme.centerChannelColor, 1);
         changeCss('.app__body .scrollbar--horizontal, .app__body .scrollbar--vertical', 'background:' + changeOpacity(theme.centerChannelColor, 0.5), 2);
+        changeCss('.app__body .post-list__new-messages-below', 'background:' + changeColor(theme.centerChannelColor, 0.5), 2);
+        changeCss('.app__body .post.post--comment .post__body', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.2), 1);
+        changeCss('.app__body .post.post--comment.current--user .post__body', 'border-color:' + changeOpacity(theme.centerChannelColor, 0.2), 1);
     }
 
     if (theme.newMessageSeparator) {
@@ -784,7 +757,7 @@ export function applyTheme(theme) {
     }
 
     if (theme.mentionHighlightLink) {
-        changeCss('.app__body .mention--highlight .mention-link', 'color:' + theme.mentionHighlightLink, 1);
+        changeCss('.app__body .mention--highlight .mention-link, .app__body .mention--highlight, .app__body .search-highlight', 'color:' + theme.mentionHighlightLink, 1);
     }
 
     if (!theme.codeTheme) {
@@ -943,7 +916,7 @@ export function isValidUsername(name) {
         error = 'This field is required';
     } else if (name.length < Constants.MIN_USERNAME_LENGTH || name.length > Constants.MAX_USERNAME_LENGTH) {
         error = 'Must be between ' + Constants.MIN_USERNAME_LENGTH + ' and ' + Constants.MAX_USERNAME_LENGTH + ' characters';
-    } else if (!(/^[a-z0-9\.\-\_]+$/).test(name)) {
+    } else if (!(/^[a-z0-9\.\-_]+$/).test(name)) {
         error = "Must contain only letters, numbers, and the symbols '.', '-', and '_'.";
     } else if (!(/[a-z]/).test(name.charAt(0))) { //eslint-disable-line no-negated-condition
         error = 'First character must be a letter.';
@@ -960,7 +933,7 @@ export function isValidUsername(name) {
 }
 
 export function isMobile() {
-    return screen.width <= 768;
+    return window.innerWidth <= 768;
 }
 
 export function isComment(post) {
@@ -996,7 +969,7 @@ Image.prototype.load = function imageLoad(url, progressCallback) {
     xmlHTTP.responseType = 'arraybuffer';
     xmlHTTP.onload = function onLoad() {
         var h = xmlHTTP.getAllResponseHeaders();
-        var m = h.match(/^Content-Type\:\s*(.*?)$/mi);
+        var m = h.match(/^Content-Type:\s*(.*?)$/mi);
         var mimeType = m[1] || 'image/png';
 
         var blob = new Blob([this.response], {type: mimeType});
@@ -1136,7 +1109,7 @@ export function fileSizeToString(bytes) {
 
 // Converts a filename (like those attached to Post objects) to a url that can be used to retrieve attachments from the server.
 export function getFileUrl(filename) {
-    return getWindowLocationOrigin() + '/api/v1/files/get' + filename;
+    return getWindowLocationOrigin() + Client.getFilesRoute() + '/get' + filename;
 }
 
 // Gets the name of a file (including extension) from a given url or file path.
@@ -1161,7 +1134,7 @@ export function generateId() {
     // implementation taken from http://stackoverflow.com/a/2117523
     var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
 
-    id = id.replace(/[xy]/g, function replaceRandom(c) {
+    id = id.replace(/[xy]/g, (c) => {
         var r = Math.floor(Math.random() * 16);
 
         var v;
@@ -1232,11 +1205,15 @@ export function importSlack(file, success, error) {
     formData.append('filesize', file.size);
     formData.append('importFrom', 'slack');
 
-    client.importSlack(formData, success, error);
+    Client.importSlack(formData, success, error);
 }
 
 export function getTeamURLFromAddressBar() {
     return window.location.origin + '/' + window.location.pathname.split('/')[1];
+}
+
+export function getTeamNameFromUrl() {
+    return window.location.pathname.split('/')[1];
 }
 
 export function getTeamURLNoOriginFromAddressBar() {
@@ -1266,6 +1243,13 @@ export function openDirectChannelToUser(user, successCb, errorCb) {
         'true'
     );
 
+    // if the user in another team and isn't already in the direct message
+    // list then we should add him so his name shows up correctly.
+    var profileUser = UserStore.getProfile(user.id);
+    if (!profileUser) {
+        UserStore.getDirectProfiles()[user.id] = user;
+    }
+
     const channelName = this.getDirectChannelName(UserStore.getCurrentId(), user.id);
     let channel = ChannelStore.getByName(channelName);
 
@@ -1285,16 +1269,11 @@ export function openDirectChannelToUser(user, successCb, errorCb) {
         };
 
         Client.createDirectChannel(
-            channel,
             user.id,
             (data) => {
                 Client.getChannel(
                     data.id,
-                    (data2, textStatus, xhr) => {
-                        if (xhr.status === 304 || !data2) {
-                            return;
-                        }
-
+                    (data2) => {
                         AppDispatcher.handleServerAction({
                             type: ActionTypes.RECEIVED_CHANNEL,
                             channel: data2.channel,
@@ -1421,8 +1400,12 @@ export function localizeMessage(id, defaultMessage) {
     return id;
 }
 
+export function mod(a, b) {
+    return ((a % b) + b) % b;
+}
+
 export function getProfilePicSrcForPost(post, timestamp) {
-    let src = '/api/v1/users/' + post.user_id + '/image?time=' + timestamp;
+    let src = Client.getUsersRoute() + '/' + post.user_id + '/image?time=' + timestamp;
     if (post.props && post.props.from_webhook && global.window.mm_config.EnablePostIconOverride === 'true') {
         if (post.props.override_icon_url) {
             src = post.props.override_icon_url;

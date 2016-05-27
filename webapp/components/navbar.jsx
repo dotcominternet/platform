@@ -17,8 +17,9 @@ import ToggleModalButton from './toggle_modal_button.jsx';
 import UserStore from 'stores/user_store.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
 import TeamStore from 'stores/team_store.jsx';
+import PreferenceStore from 'stores/preference_store.jsx';
 
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
 import * as Utils from 'utils/utils.jsx';
 
@@ -33,6 +34,8 @@ import {Popover, OverlayTrigger} from 'react-bootstrap';
 import {Link, browserHistory} from 'react-router';
 
 import React from 'react';
+
+import * as GlobalActions from 'actions/global_actions.jsx';
 
 export default class Navbar extends React.Component {
     constructor(props) {
@@ -49,6 +52,12 @@ export default class Navbar extends React.Component {
 
         this.createCollapseButtons = this.createCollapseButtons.bind(this);
         this.createDropdown = this.createDropdown.bind(this);
+
+        this.navigateChannelShortcut = this.navigateChannelShortcut.bind(this);
+        this.navigateUnreadChannelShortcut = this.navigateUnreadChannelShortcut.bind(this);
+        this.getDisplayedChannels = this.getDisplayedChannels.bind(this);
+        this.compareByName = this.compareByName.bind(this);
+        this.compareByDisplayName = this.compareByDisplayName.bind(this);
 
         const state = this.getStateFromStores();
         state.showEditChannelPurposeModal = false;
@@ -72,10 +81,14 @@ export default class Navbar extends React.Component {
         ChannelStore.addChangeListener(this.onChange);
         ChannelStore.addExtraInfoChangeListener(this.onChange);
         $('.inner-wrap').click(this.hideSidebars);
+        document.addEventListener('keydown', this.navigateChannelShortcut);
+        document.addEventListener('keydown', this.navigateUnreadChannelShortcut);
     }
     componentWillUnmount() {
         ChannelStore.removeChangeListener(this.onChange);
         ChannelStore.removeExtraInfoChangeListener(this.onChange);
+        document.removeEventListener('keydown', this.navigateChannelShortcut);
+        document.removeEventListener('keydown', this.navigateUnreadChannelShortcut);
     }
     handleSubmit(e) {
         e.preventDefault();
@@ -150,6 +163,96 @@ export default class Navbar extends React.Component {
             showRenameChannelModal: false
         });
     }
+    navigateChannelShortcut(e) {
+        if (e.altKey && !e.shiftKey && (e.keyCode === Constants.KeyCodes.UP || e.keyCode === Constants.KeyCodes.DOWN)) {
+            e.preventDefault();
+            const allChannels = this.getDisplayedChannels();
+            const curChannel = this.state.channel;
+            let curIndex = -1;
+            for (let i = 0; i < allChannels.length; i++) {
+                if (allChannels[i].id === curChannel.id) {
+                    curIndex = i;
+                }
+            }
+            let nextChannel = curChannel;
+            let nextIndex = curIndex;
+            if (e.keyCode === Constants.KeyCodes.DOWN) {
+                nextIndex = curIndex + 1;
+            } else if (e.keyCode === Constants.KeyCodes.UP) {
+                nextIndex = curIndex - 1;
+            }
+            nextChannel = allChannels[Utils.mod(nextIndex, allChannels.length)];
+            GlobalActions.emitChannelClickEvent(nextChannel);
+        }
+    }
+    navigateUnreadChannelShortcut(e) {
+        if (e.altKey && e.shiftKey && (e.keyCode === Constants.KeyCodes.UP || e.keyCode === Constants.KeyCodes.DOWN)) {
+            e.preventDefault();
+            const allChannels = this.getDisplayedChannels();
+            const curChannel = this.state.channel;
+            let curIndex = -1;
+            for (let i = 0; i < allChannels.length; i++) {
+                if (allChannels[i].id === curChannel.id) {
+                    curIndex = i;
+                }
+            }
+            let nextChannel = curChannel;
+            let nextIndex = curIndex;
+            let count = 0;
+            let increment = 0;
+            if (e.keyCode === Constants.KeyCodes.UP) {
+                increment = -1;
+            } else if (e.keyCode === Constants.KeyCodes.DOWN) {
+                increment = 1;
+            }
+            let unreadCounts = ChannelStore.getUnreadCount(allChannels[nextIndex].id);
+            while (count < allChannels.length && unreadCounts.msgs === 0 && unreadCounts.mentions === 0) {
+                nextIndex += increment;
+                count++;
+                nextIndex = Utils.mod(nextIndex, allChannels.length);
+                unreadCounts = ChannelStore.getUnreadCount(allChannels[nextIndex].id);
+            }
+            if (unreadCounts.msgs !== 0 || unreadCounts.mentions !== 0) {
+                nextChannel = allChannels[nextIndex];
+                GlobalActions.emitChannelClickEvent(nextChannel);
+            }
+        }
+    }
+    getDisplayedChannels() {
+        const allChannels = ChannelStore.getChannels().sort(this.compareByName);
+        const publicChannels = allChannels.filter((channel) => channel.type === Constants.OPEN_CHANNEL);
+        const privateChannels = allChannels.filter((channel) => channel.type === Constants.PRIVATE_CHANNEL);
+
+        const preferences = PreferenceStore.getCategory(Constants.Preferences.CATEGORY_DIRECT_CHANNEL_SHOW);
+
+        const directChannels = [];
+        const directNonTeamChannels = [];
+        for (const [name, value] of preferences) {
+            if (value !== 'true') {
+                continue;
+            }
+
+            const directChannel = allChannels.find(Utils.isDirectChannelForUser.bind(null, name));
+            directChannel.display_name = Utils.displayUsername(name);
+
+            if (UserStore.hasTeamProfile(name)) {
+                directChannels.push(directChannel);
+            } else {
+                directNonTeamChannels.push(directChannel);
+            }
+        }
+
+        directChannels.sort(this.compareByDisplayName);
+        directNonTeamChannels.sort(this.compareByDisplayName);
+
+        return publicChannels.concat(privateChannels).concat(directChannels).concat(directNonTeamChannels);
+    }
+    compareByName(a, b) {
+        return a.name.localeCompare(b.name);
+    }
+    compareByDisplayName(a, b) {
+        return a.display_name.localeCompare(b.display_name);
+    }
     createDropdown(channel, channelTitle, isAdmin, isDirect, popoverContent) {
         if (channel) {
             var viewInfoOption = (
@@ -218,20 +321,23 @@ export default class Navbar extends React.Component {
                     </li>
                 );
 
-                leaveChannelOption = (
-                    <li role='presentation'>
-                        <a
-                            role='menuitem'
-                            href='#'
-                            onClick={this.handleLeave}
-                        >
-                            <FormattedMessage
-                                id='navbar.leave'
-                                defaultMessage='Leave Channel'
-                            />
-                        </a>
-                    </li>
-                );
+                const canLeave = channel.type === Constants.PRIVATE_CHANNEL ? this.state.userCount > 1 : true;
+                if (canLeave) {
+                    leaveChannelOption = (
+                        <li role='presentation'>
+                            <a
+                                role='menuitem'
+                                href='#'
+                                onClick={this.handleLeave}
+                            >
+                                <FormattedMessage
+                                    id='navbar.leave'
+                                    defaultMessage='Leave Channel'
+                                />
+                            </a>
+                        </li>
+                    );
+                }
             }
 
             var manageMembersOption;
@@ -452,7 +558,8 @@ export default class Navbar extends React.Component {
                     />
                 </Popover>
             );
-            isAdmin = Utils.isAdmin(this.state.member.roles);
+
+            isAdmin = Utils.isAdmin(this.state.member.roles) || TeamStore.isTeamAdminForCurrentTeam() || UserStore.isSystemAdminForCurrentUser();
 
             if (channel.type === 'O') {
                 channelTitle = channel.display_name;

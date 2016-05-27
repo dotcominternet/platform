@@ -6,9 +6,10 @@ package api
 import (
 	l4g "github.com/alecthomas/log4go"
 	"github.com/braintree/manners"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/dotcominternet/platform/store"
 	"github.com/dotcominternet/platform/utils"
-	"github.com/gorilla/mux"
 	"gopkg.in/throttled/throttled.v1"
 	throttledStore "gopkg.in/throttled/throttled.v1/store"
 	"net/http"
@@ -73,11 +74,10 @@ func StartServer() {
 	}
 
 	go func() {
-		err := manners.ListenAndServe(utils.Cfg.ServiceSettings.ListenAddress, handler)
+		err := manners.ListenAndServe(utils.Cfg.ServiceSettings.ListenAddress, handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(handler))
 		if err != nil {
 			l4g.Critical(utils.T("api.server.start_server.starting.critical"), err)
 			time.Sleep(time.Second)
-			panic(utils.T("api.server.start_server.starting.panic") + err.Error())
 		}
 	}()
 }

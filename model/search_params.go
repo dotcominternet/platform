@@ -15,6 +15,7 @@ type SearchParams struct {
 	FromUsers  []string
 	SinceDate  int64
 	UntilDate  int64
+	OrTerms    bool
 }
 
 var searchFlags = [...]string{"from", "channel", "in", "on", "since", "until"}

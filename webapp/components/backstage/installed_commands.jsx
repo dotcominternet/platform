@@ -5,6 +5,8 @@ import React from 'react';
 
 import * as AsyncClient from 'utils/async_client.jsx';
 import IntegrationStore from 'stores/integration_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
+import * as Utils from 'utils/utils.jsx';
 
 import {FormattedMessage} from 'react-intl';
 import InstalledCommand from './installed_command.jsx';
@@ -19,22 +21,19 @@ export default class InstalledCommands extends React.Component {
         this.regenCommandToken = this.regenCommandToken.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
 
+        const teamId = TeamStore.getCurrentId();
+
         this.state = {
-            commands: []
+            commands: IntegrationStore.getCommands(teamId),
+            loading: !IntegrationStore.hasReceivedCommands(teamId)
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         IntegrationStore.addChangeListener(this.handleIntegrationChange);
 
         if (window.mm_config.EnableCommands === 'true') {
-            if (IntegrationStore.hasReceivedCommands()) {
-                this.setState({
-                    commands: IntegrationStore.getCommands()
-                });
-            } else {
-                AsyncClient.listTeamCommands();
-            }
+            AsyncClient.listTeamCommands();
         }
     }
 
@@ -43,10 +42,11 @@ export default class InstalledCommands extends React.Component {
     }
 
     handleIntegrationChange() {
-        const commands = IntegrationStore.getCommands();
+        const teamId = TeamStore.getCurrentId();
 
         this.setState({
-            commands
+            commands: IntegrationStore.getCommands(teamId),
+            loading: !IntegrationStore.hasReceivedCommands(teamId)
         });
     }
 
@@ -84,7 +84,14 @@ export default class InstalledCommands extends React.Component {
                         defaultMessage='Add Slash Command'
                     />
                 }
-                addLink='/settings/integrations/commands/add'
+                addLink={'/' + Utils.getTeamNameFromUrl() + '/settings/integrations/commands/add'}
+                emptyText={
+                    <FormattedMessage
+                        id='installed_commands.empty'
+                        defaultMessage='No slash commands found'
+                    />
+                }
+                loading={this.state.loading}
             >
                 {commands}
             </InstalledIntegrations>

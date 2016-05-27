@@ -22,7 +22,9 @@ function getDisplayStateFromStores() {
     return {
         militaryTime: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, 'use_military_time', 'false'),
         nameFormat: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, 'name_format', 'username'),
-        selectedFont: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, 'selected_font', Constants.DEFAULT_FONT)
+        selectedFont: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, 'selected_font', Constants.DEFAULT_FONT),
+        channelDisplayMode: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT),
+        messageDisplay: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.MESSAGE_DISPLAY, Preferences.MESSAGE_DISPLAY_DEFAULT)
     };
 }
 
@@ -63,8 +65,20 @@ export default class UserSettingsDisplay extends React.Component {
             name: 'selected_font',
             value: this.state.selectedFont
         };
+        const channelDisplayModePreference = {
+            user_id: userId,
+            category: Preferences.CATEGORY_DISPLAY_SETTINGS,
+            name: Preferences.CHANNEL_DISPLAY_MODE,
+            value: this.state.channelDisplayMode
+        };
+        const messageDisplayPreference = {
+            user_id: userId,
+            category: Preferences.CATEGORY_DISPLAY_SETTINGS,
+            name: Preferences.MESSAGE_DISPLAY,
+            value: this.state.messageDisplay
+        };
 
-        AsyncClient.savePreferences([timePreference, namePreference, fontPreference],
+        AsyncClient.savePreferences([timePreference, namePreference, fontPreference, channelDisplayModePreference, messageDisplayPreference],
             () => {
                 this.updateSection('');
             },
@@ -78,6 +92,12 @@ export default class UserSettingsDisplay extends React.Component {
     }
     handleNameRadio(nameFormat) {
         this.setState({nameFormat});
+    }
+    handleChannelDisplayModeRadio(channelDisplayMode) {
+        this.setState({channelDisplayMode});
+    }
+    handlemessageDisplayRadio(messageDisplay) {
+        this.setState({messageDisplay});
     }
     handleFont(selectedFont) {
         Utils.applyFont(selectedFont);
@@ -102,8 +122,10 @@ export default class UserSettingsDisplay extends React.Component {
         const serverError = this.state.serverError || null;
         let clockSection;
         let nameFormatSection;
+        let channelDisplayModeSection;
         let fontSection;
         let languagesSection;
+        let messageDisplaySection;
 
         if (this.props.activeSection === 'clock') {
             const clockFormat = [false, false];
@@ -124,6 +146,7 @@ export default class UserSettingsDisplay extends React.Component {
                         <label>
                             <input
                                 type='radio'
+                                name='clockFormat'
                                 checked={clockFormat[0]}
                                 onChange={this.handleClockRadio.bind(this, 'false')}
                             />
@@ -138,6 +161,7 @@ export default class UserSettingsDisplay extends React.Component {
                         <label>
                             <input
                                 type='radio'
+                                name='clockFormat'
                                 checked={clockFormat[1]}
                                 onChange={this.handleClockRadio.bind(this, 'true')}
                             />
@@ -242,6 +266,7 @@ export default class UserSettingsDisplay extends React.Component {
                         <label>
                             <input
                                 type='radio'
+                                name='nameFormat'
                                 checked={nameFormat[1]}
                                 onChange={this.handleNameRadio.bind(this, 'username')}
                             />
@@ -253,6 +278,7 @@ export default class UserSettingsDisplay extends React.Component {
                         <label>
                             <input
                                 type='radio'
+                                name='nameFormat'
                                 checked={nameFormat[0]}
                                 onChange={this.handleNameRadio.bind(this, 'nickname_full_name')}
                             />
@@ -264,6 +290,7 @@ export default class UserSettingsDisplay extends React.Component {
                         <label>
                             <input
                                 type='radio'
+                                name='nameFormat'
                                 checked={nameFormat[2]}
                                 onChange={this.handleNameRadio.bind(this, 'full_name')}
                             />
@@ -334,6 +361,208 @@ export default class UserSettingsDisplay extends React.Component {
                     describe={describe}
                     updateSection={() => {
                         this.props.updateSection('name_format');
+                    }}
+                />
+            );
+        }
+
+        if (this.props.activeSection === Preferences.MESSAGE_DISPLAY) {
+            const messageDisplay = [false, false];
+            if (this.state.messageDisplay === Preferences.MESSAGE_DISPLAY_CLEAN) {
+                messageDisplay[0] = true;
+            } else {
+                messageDisplay[1] = true;
+            }
+
+            const inputs = [
+                <div key='userDisplayNameOptions'>
+                    <div className='radio'>
+                        <label>
+                            <input
+                                type='radio'
+                                name='messageDisplay'
+                                checked={messageDisplay[0]}
+                                onChange={this.handlemessageDisplayRadio.bind(this, Preferences.MESSAGE_DISPLAY_CLEAN)}
+                            />
+                            <FormattedMessage
+                                id='user.settings.display.messageDisplayClean'
+                                defaultMessage='Clean'
+                            />
+                        </label>
+                        <br/>
+                    </div>
+                    <div className='radio'>
+                        <label>
+                            <input
+                                type='radio'
+                                name='messageDisplay'
+                                checked={messageDisplay[1]}
+                                onChange={this.handlemessageDisplayRadio.bind(this, Preferences.MESSAGE_DISPLAY_COMPACT)}
+                            />
+                            <FormattedMessage
+                                id='user.settings.display.messageDisplayCompact'
+                                defaultMessage='Compact'
+                            />
+                        </label>
+                        <br/>
+                    </div>
+                    <div>
+                        <br/>
+                        <FormattedMessage
+                            id='user.settings.display.messageDisplayDescription'
+                            defaultMessage='Select how messages in a channel should be displayed.'
+                        />
+                    </div>
+                </div>
+            ];
+
+            messageDisplaySection = (
+                <SettingItemMax
+                    title={
+                        <FormattedMessage
+                            id='user.settings.display.messageDisplayTitle'
+                            defaultMessage='Message Display'
+                        />
+                    }
+                    inputs={inputs}
+                    submit={this.handleSubmit}
+                    server_error={serverError}
+                    updateSection={(e) => {
+                        this.updateSection('');
+                        e.preventDefault();
+                    }}
+                />
+            );
+        } else {
+            let describe;
+            if (this.state.messageDisplay === Preferences.MESSAGE_DISPLAY_CLEAN) {
+                describe = (
+                    <FormattedMessage
+                        id='user.settings.display.messageDisplayClean'
+                        defaultMessage='Clean'
+                    />
+                );
+            } else {
+                describe = (
+                    <FormattedMessage
+                        id='user.settings.display.messageDisplayCompact'
+                        defaultMessage='Compact'
+                    />
+                );
+            }
+
+            messageDisplaySection = (
+                <SettingItemMin
+                    title={
+                        <FormattedMessage
+                            id='user.settings.display.messageDisplayTitle'
+                            defaultMessage='Message Display'
+                        />
+                    }
+                    describe={describe}
+                    updateSection={() => {
+                        this.props.updateSection(Preferences.MESSAGE_DISPLAY);
+                    }}
+                />
+            );
+        }
+
+        if (this.props.activeSection === Preferences.CHANNEL_DISPLAY_MODE) {
+            const channelDisplayMode = [false, false];
+            if (this.state.channelDisplayMode === Preferences.CHANNEL_DISPLAY_MODE_CENTERED) {
+                channelDisplayMode[0] = true;
+            } else {
+                channelDisplayMode[1] = true;
+            }
+
+            const inputs = [
+                <div key='userDisplayNameOptions'>
+                    <div className='radio'>
+                        <label>
+                            <input
+                                type='radio'
+                                name='channelDisplayMode'
+                                checked={channelDisplayMode[0]}
+                                onChange={this.handleChannelDisplayModeRadio.bind(this, Preferences.CHANNEL_DISPLAY_MODE_CENTERED)}
+                            />
+                            <FormattedMessage
+                                id='user.settings.display.fixedWidthCentered'
+                                defaultMessage='Fixed width, centered'
+                            />
+                        </label>
+                        <br/>
+                    </div>
+                    <div className='radio'>
+                        <label>
+                            <input
+                                type='radio'
+                                name='channelDisplayMode'
+                                checked={channelDisplayMode[1]}
+                                onChange={this.handleChannelDisplayModeRadio.bind(this, Preferences.CHANNEL_DISPLAY_MODE_FULL_SCREEN)}
+                            />
+                            <FormattedMessage
+                                id='user.settings.display.fullScreen'
+                                defaultMessage='Full width'
+                            />
+                        </label>
+                        <br/>
+                    </div>
+                    <div>
+                        <br/>
+                        <FormattedMessage
+                            id='user.settings.display.channeldisplaymode'
+                            defaultMessage='Select the width of the center channel.'
+                        />
+                    </div>
+                </div>
+            ];
+
+            channelDisplayModeSection = (
+                <SettingItemMax
+                    title={
+                        <FormattedMessage
+                            id='user.settings.display.channelDisplayTitle'
+                            defaultMessage='Channel Display Mode'
+                        />
+                    }
+                    inputs={inputs}
+                    submit={this.handleSubmit}
+                    server_error={serverError}
+                    updateSection={(e) => {
+                        this.updateSection('');
+                        e.preventDefault();
+                    }}
+                />
+            );
+        } else {
+            let describe;
+            if (this.state.channelDisplayMode === Preferences.CHANNEL_DISPLAY_MODE_CENTERED) {
+                describe = (
+                    <FormattedMessage
+                        id='user.settings.display.fixedWidthCentered'
+                        defaultMessage='Fixed width, centered'
+                    />
+                );
+            } else {
+                describe = (
+                    <FormattedMessage
+                        id='user.settings.display.fullScreen'
+                        defaultMessage='Full width'
+                    />
+                );
+            }
+
+            channelDisplayModeSection = (
+                <SettingItemMin
+                    title={
+                        <FormattedMessage
+                            id='user.settings.display.channelDisplayTitle'
+                            defaultMessage='Channel Display Mode'
+                        />
+                    }
+                    describe={describe}
+                    updateSection={() => {
+                        this.props.updateSection(Preferences.CHANNEL_DISPLAY_MODE);
                     }}
                 />
             );
@@ -490,6 +719,10 @@ export default class UserSettingsDisplay extends React.Component {
                     {clockSection}
                     <div className='divider-dark'/>
                     {nameFormatSection}
+                    <div className='divider-dark'/>
+                    {messageDisplaySection}
+                    <div className='divider-dark'/>
+                    {channelDisplayModeSection}
                     <div className='divider-dark'/>
                     {languagesSection}
                 </div>

@@ -48,6 +48,10 @@
     "translation": "September"
   },
   {
+    "id": "api.general.init.debug",
+    "translation": "Initializing general api routes"
+  },
+  {
     "id": "api.admin.file_read_error",
     "translation": "Error reading log file"
   },
@@ -64,12 +68,24 @@
     "translation": "Initializing admin api routes"
   },
   {
+    "id": "api.admin.recycle_db_start.warn",
+    "translation": "Attempting to recycle the database connection"
+  },
+  {
+    "id": "api.admin.recycle_db_end.warn",
+    "translation": "Finished recycling the database connection"
+  },
+  {
     "id": "api.admin.test_email.body",
     "translation": "<br/><br/><br/>It appears your Mattermost email is setup correctly!"
   },
   {
     "id": "api.admin.test_email.subject",
     "translation": "Mattermost - Testing Email Settings"
+  },
+  {
+    "id": "api.admin.test_email.missing_server",
+    "translation": "SMTP Server is required"
   },
   {
     "id": "api.admin.upload_brand_image.array.app_error",
@@ -222,6 +238,10 @@
   {
     "id": "api.channel.leave.direct.app_error",
     "translation": "Cannot leave a direct message channel"
+  },
+  {
+    "id": "api.channel.leave.last_member.app_error",
+    "translation": "You're the only member left, try removing the Private Group instead of leaving."
   },
   {
     "id": "api.channel.leave.left",
@@ -380,6 +400,10 @@
     "translation": "Logout of Mattermost"
   },
   {
+    "id": "api.command_logout.fail_message",
+    "translation": "Failed to log out"
+  },
+  {
     "id": "api.command_logout.name",
     "translation": "logout"
   },
@@ -442,6 +466,18 @@
   {
     "id": "api.command_shrug.name",
     "translation": "shrug"
+  },
+  {
+    "id": "api.command_shortcuts.desc",
+    "translation": "Displays a list of keyboard shortcuts"
+  },
+  {
+    "id": "api.command_shortcuts.name",
+    "translation": "shortcuts"
+  },
+  {
+    "id": "api.command_shortcuts.list",
+    "translation": "### Keyboard Shortcuts\n\n#### CTRL/CMD\n\n- CTRL/CMD+K - Open up channel switcher\n- CTRL/CMD+U - Open up file upload\n- CTRL/CMD+Up - Reprint last message or slash command entered\n- CTRL/CMD+SHIFT+A - Open account settings\n- CTRL/CMD+SHIFT+M - Open recent mentions\n\n#### ALT\n\n- ALT+Up - Go to previous channel\n- ALT+Down - Go to next channel\n- ALT+SHIFT+Up - Go to previous channel with unread messages\n- ALT+SHIFT+Down - Go to next channel with unread messages\n\n#### General\n\n- Up - Edit last message\n- /+Up/Down - See available slash commands\n"
   },
   {
     "id": "api.context.404.app_error",
@@ -654,6 +690,10 @@
   {
     "id": "api.import.import_post.saving.debug",
     "translation": "Error saving post. user=%v, message=%v"
+  },
+  {
+    "id": "api.import.import_user.join_team.error",
+    "translation": "Failed to join team when importing err=%v"
   },
   {
     "id": "api.import.import_user.joining_default.error",
@@ -880,6 +920,14 @@
     "translation": " mentioned you in "
   },
   {
+    "id": "api.post.send_notifications_and_forget.push_in",
+    "translation": " in "
+  },
+  {
+    "id": "api.post.send_notifications_and_forget.push_non_mention",
+    "translation": " posted in "
+  },
+  {
     "id": "api.post.send_notifications_and_forget.push_message",
     "translation": " sent you a direct message"
   },
@@ -922,6 +970,10 @@
   {
     "id": "api.post.update_post.permissions_details.app_error",
     "translation": "Already deleted id={{.PostId}}"
+  },
+  {
+    "id": "api.post.update_post.system_message.app_error",
+    "translation": "Unable to update system message"
   },
   {
     "id": "api.post_get_post_by_id.get.app_error",
@@ -982,6 +1034,10 @@
   {
     "id": "api.slackimport.slack_add_channels.added",
     "translation": "\r\n Channels Added \r\n"
+  },
+  {
+    "id": "api.slackimport.slack_add_channels.failed_to_add_user",
+    "translation": "Failed to add user to channel: {{.Username}}\r\n"
   },
   {
     "id": "api.slackimport.slack_add_channels.import_failed",
@@ -1050,6 +1106,10 @@
   {
     "id": "api.slackimport.slack_import.open.app_error",
     "translation": "Unable to open: {{.Filename}}"
+  },
+  {
+    "id": "api.slackimport.slack_import.team_fail",
+    "translation": "Failed to get team to import into.\r\n"
   },
   {
     "id": "api.slackimport.slack_import.zip.app_error",
@@ -1169,7 +1229,7 @@
   },
   {
     "id": "api.templates.email_change_body.info",
-    "translation": "You email address for {{.TeamDisplayName}} has been changed to {{.NewEmail}}.<br>If you did not make this change, please contact the system administrator."
+    "translation": "Your email address for {{.TeamDisplayName}} has been changed to {{.NewEmail}}.<br>If you did not make this change, please contact the system administrator."
   },
   {
     "id": "api.templates.email_change_body.title",
@@ -1178,6 +1238,18 @@
   {
     "id": "api.templates.email_change_subject",
     "translation": "Your email address has changed for {{.TeamDisplayName}}"
+  },
+  {
+    "id": "api.templates.username_change_body.info",
+    "translation": "Your username for {{.TeamDisplayName}} has been changed to {{.NewUsername}}.<br>If you did not make this change, please contact the system administrator."
+  },
+  {
+    "id": "api.templates.username_change_body.title",
+    "translation": "You updated your username"
+  },
+  {
+    "id": "api.templates.username_change_subject",
+    "translation": "Your username has changed for {{.TeamDisplayName}}"
   },
   {
     "id": "api.templates.email_change_verify_body.button",
@@ -1313,11 +1385,19 @@
   },
   {
     "id": "api.templates.singin_change_email.body.info",
-    "translation": "You updated your sign-in method for {{.TeamDisplayName}} on {{ .TeamURL }} to {{.Method}}.<br>If this change wasn't initiated by you, please contact your system administrator."
+    "translation": "You updated your sign-in method for on {{ .SiteName }} to {{.Method}}.<br>If this change wasn't initiated by you, please contact your system administrator."
   },
   {
     "id": "api.templates.singin_change_email.subject",
-    "translation": "You updated your sign-in method for {{.TeamDisplayName}} on {{ .SiteName }}"
+    "translation": "You updated your sign-in method on {{ .SiteName }}"
+  },
+  {
+    "id": "api.templates.upgrade_30_body.info",
+    "translation": "<h3 style='font-weight: normal; margin-top: 10px;'>YOUR DUPLICATE ACCOUNTS HAVE BEEN UPDATED</h3>Your Mattermost server is being upgraded to Version 3.0, which lets you use a single account across multiple teams.<br/><br/>You are receiving this email because the upgrade process has detected your account had the same email or username as other accounts on the server.<br/><br/>The following updates have been made: <br/><br/>{{if .EmailChanged }}- The duplicate email of an account on the `/{{.TeamName}}` team was changed to `{{.Email}}`. You will need to use email and password to login, you can use this new email address for login.<br/><br/>{{end}}{{if .UsernameChanged }}- The duplicate username of an account on the team site `/{{.TeamName}}` has been changed to `{{.Username}}` to avoid confusion with other accounts.<br/><br/>{{end}} RECOMMENDED ACTION: <br/><br/>It is recommended that you login to your teams used by your duplicate accounts and add your primary account to the team and any public channels and private groups which you wish to continue using. <br/><br/>This gives your primary account access to all public channel and private group history. You can continue to access the direct message history of your duplicate accounts by logging in with their credentials. <br/><br/>FOR MORE INFORMATION: <br/><br/>For more information on the upgrade to Mattermost 3.0 please see: <a href='http://www.mattermost.org/upgrading-to-mattermost-3-0/'>http://www.mattermost.org/upgrading-to-mattermost-3-0/</a><br/><br/>"
+  },
+  {
+    "id": "api.templates.upgrade_30_subject.info",
+    "translation": "[MATTERMOST] Changes to your account for Mattermost 3.0 Upgrade"
   },
   {
     "id": "api.templates.verify_body.button",
@@ -1425,11 +1505,11 @@
   },
   {
     "id": "api.user.create_oauth_user.already_attached.app_error",
-    "translation": "Team {{.DisplayName}} already has a user with the email address attached to your {{.Service}} account"
+    "translation": "An existing user is already attached to your {{.Service}} account"
   },
   {
     "id": "api.user.create_oauth_user.already_used.app_error",
-    "translation": "This {{.Service}} account has already been used to sign up for team {{.DisplayName}}"
+    "translation": "This {{.Service}} account has already been used to sign up"
   },
   {
     "id": "api.user.create_oauth_user.create.app_error",
@@ -1437,7 +1517,7 @@
   },
   {
     "id": "api.user.create_oauth_user.not_available.app_error",
-    "translation": "{{.Service}} oauth not avlailable on this server"
+    "translation": "{{.Service}} oauth not available on this server"
   },
   {
     "id": "api.user.create_profile_image.default_font.app_error",
@@ -1458,6 +1538,10 @@
   {
     "id": "api.user.create_user.joining.error",
     "translation": "Encountered an issue joining default channels user_id=%s, team_id=%s, err=%v"
+  },
+  {
+    "id": "api.user.create_user.no_open_server",
+    "translation": "This server does not allow open signups.  Please speak with your Administrator to receive an invitation."
   },
   {
     "id": "api.user.create_user.save.error",
@@ -1536,7 +1620,7 @@
     "translation": "Revoking sessionId=%v for userId=%v re-login with same device Id"
   },
   {
-    "id": "api.user.login_by_email.sign_in.app_error",
+    "id": "api.user.login.use_auth_service.app_error",
     "translation": "Please sign in using {{.AuthService}}"
   },
   {
@@ -1602,6 +1686,10 @@
   {
     "id": "api.user.send_email_change_email_and_forget.error",
     "translation": "Failed to send email change notification email successfully err=%v"
+  },
+  {
+    "id": "api.user.send_email_change_username_and_forget.error",
+    "translation": "Failed to send username change notification email successfully err=%v"
   },
   {
     "id": "api.user.send_email_change_verify_email_and_forget.error",
@@ -1676,12 +1764,16 @@
     "translation": "You do not have the appropriate permissions"
   },
   {
-    "id": "api.user.update_roles.system_admin_mod.app_error",
-    "translation": "The system admin role can only by modified by another system admin"
+    "id": "api.user.update_roles.system_admin_needed.app_error",
+    "translation": "The system admin role is needed for this action"
   },
   {
     "id": "api.user.update_roles.system_admin_set.app_error",
     "translation": "The system admin role can only be set by another system admin"
+  },
+  {
+    "id": "api.user.update_roles.team_admin_needed.app_error",
+    "translation": "The team admin role is needed for this action"
   },
   {
     "id": "api.user.upload_profile_user.array.app_error",
@@ -1762,6 +1854,14 @@
   {
     "id": "api.webhook.create_outgoing.disabled.app_error",
     "translation": "Outgoing webhooks have been disabled by the system admin."
+  },
+  {
+    "id": "api.webhook.create_outgoing.not_open.app_error",
+    "translation": "Outgoing webhooks can only be created for public channels."
+  },
+  {
+    "id": "api.webhook.create_outgoing.permissions.app_error",
+    "translation": "Inappropriate permissions to create outcoming webhook."
   },
   {
     "id": "api.webhook.create_outgoing.triggers.app_error",
@@ -1989,7 +2089,7 @@
   },
   {
     "id": "mattermost.current_version",
-    "translation": "Current version is %v (%v/%v/%v)"
+    "translation": "Current version is %v (%v/%v/%v/%v)"
   },
   {
     "id": "mattermost.entreprise_enabled",
@@ -2022,6 +2122,10 @@
   {
     "id": "mattermost.system_admins.error",
     "translation": "Failed to get system admins for security update information from Mattermost."
+  },
+  {
+    "id": "mattermost.unable_to_load_config",
+    "translation": "Unable to load mattermost configuration file:"
   },
   {
     "id": "mattermost.working_dir",
@@ -2288,6 +2392,10 @@
     "translation": "Invalid per sec for rate limit settings.  Must be a positive number"
   },
   {
+    "id": "model.config.is_valid.restrict_direct_message.app_error",
+    "translation": "Invalid direct message restriction.  Must be 'any', or 'team'"
+  },
+  {
     "id": "model.config.is_valid.sql_data_src.app_error",
     "translation": "Invalid data source for SQL settings.  Must be set."
   },
@@ -2298,6 +2406,10 @@
   {
     "id": "model.config.is_valid.sql_idle.app_error",
     "translation": "Invalid maximum idle connection for SQL settings.  Must be a positive number."
+  },
+  {
+    "id": "model.config.is_valid.max_file_size.app_error",
+    "translation": "Invalid max file size for file settings. Must be a zero or positive number."
   },
   {
     "id": "model.config.is_valid.sql_max_conn.app_error",
@@ -2542,6 +2654,18 @@
   {
     "id": "model.team.is_valid.url.app_error",
     "translation": "Invalid URL Identifier"
+  },
+  {
+    "id": "model.team_member.is_valid.role.app_error",
+    "translation": "Invalid role"
+  },
+  {
+    "id": "model.team_member.is_valid.team_id.app_error",
+    "translation": "Invalid team id"
+  },
+  {
+    "id": "model.team_member.is_valid.user_id.app_error",
+    "translation": "Invalid user id"
   },
   {
     "id": "model.user.is_valid.auth_data.app_error",
@@ -2822,6 +2946,10 @@
   {
     "id": "store.sql_channel.get_member.app_error",
     "translation": "We couldn't get the channel member"
+  },
+  {
+    "id": "store.sql_channel.get_member.missing.app_error",
+    "translation": "No channel member found for that user id and channel id"
   },
   {
     "id": "store.sql_channel.get_member_count.app_error",
@@ -3237,7 +3365,7 @@
   },
   {
     "id": "store.sql_session.remove_all_sessions_for_team.app_error",
-    "translation": "We couldn't remove all the sessions for the team"
+    "translation": "We couldn't remove all the sessions"
   },
   {
     "id": "store.sql_session.save.app_error",
@@ -3312,12 +3440,24 @@
     "translation": "We couldn't find the existing team"
   },
   {
+    "id": "store.sql_team.get_member.app_error",
+    "translation": "We couldn't get the team member"
+  },
+  {
+    "id": "store.sql_team.get_members.app_error",
+    "translation": "We couldn't get the team members"
+  },
+  {
     "id": "store.sql_team.get_teams_for_email.app_error",
     "translation": "We encountered a problem when looking up teams"
   },
   {
     "id": "store.sql_team.permanent_delete.app_error",
     "translation": "We couldn't delete the existing team"
+  },
+  {
+    "id": "store.sql_team.remove_member.app_error",
+    "translation": "We couldn't remove the team member"
   },
   {
     "id": "store.sql_team.save.app_error",
@@ -3330,6 +3470,14 @@
   {
     "id": "store.sql_team.save.existing.app_error",
     "translation": "Must call update for exisiting team"
+  },
+  {
+    "id": "store.sql_team.save_member.exists.app_error",
+    "translation": "A team member with that id already exists"
+  },
+  {
+    "id": "store.sql_team.save_member.save.app_error",
+    "translation": "We couldn't save the team member"
   },
   {
     "id": "store.sql_team.update.app_error",
@@ -3376,6 +3524,14 @@
     "translation": "We encountered an error while finding user profiles"
   },
   {
+    "id": "store.sql_user.get_for_login.app_error",
+    "translation": "We couldn't find an existing account matching your credentials. This team may require an invite from the team owner to join."
+  },
+  {
+    "id": "store.sql_user.get_for_login.multiple_users",
+    "translation": "We found multiple users matching your credentials and were unable to log you in. Please contact an administrator."
+  },
+  {
     "id": "store.sql_user.get_profiles.app_error",
     "translation": "We encountered an error while finding user profiles"
   },
@@ -3412,6 +3568,10 @@
     "translation": "An account with that email already exists."
   },
   {
+    "id": "store.sql_user.save.email_exists.ldap_app_error",
+    "translation": "This account does not use LDAP authentication. Please sign in using email and password."
+  },
+  {
     "id": "store.sql_user.save.existing.app_error",
     "translation": "Must call update for exisiting user"
   },
@@ -3428,8 +3588,16 @@
     "translation": "An account with that username already exists."
   },
   {
+    "id": "store.sql_user.save.username_exists.ldap_app_error",
+    "translation": "An account with that username already exists. Please contact your Administrator."
+  },
+  {
     "id": "store.sql_user.update.app_error",
     "translation": "We couldn't update the account"
+  },
+  {
+    "id": "store.sql_user.update.can_not_change_ldap.app_error",
+    "translation": "Can not change fields set by LDAP"
   },
   {
     "id": "store.sql_user.update.email_taken.app_error",

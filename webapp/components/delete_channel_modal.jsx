@@ -2,7 +2,7 @@
 // See License.txt for license information.
 
 import * as AsyncClient from 'utils/async_client.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import {Modal} from 'react-bootstrap';
 import TeamStore from 'stores/team_store.jsx';
 import Constants from 'utils/constants.jsx';
@@ -25,7 +25,7 @@ export default class DeleteChannelModal extends React.Component {
             return;
         }
 
-        browserHistory.push(TeamStore.getCurrentTeamUrl() + '/channels/town-square');
+        browserHistory.push(TeamStore.getCurrentTeamRelativeUrl() + '/channels/town-square');
         Client.deleteChannel(
             this.props.channel.id,
             () => {

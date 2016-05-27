@@ -2,16 +2,21 @@
 // See License.txt for license information.
 
 import $ from 'jquery';
-import ReactDOM from 'react-dom';
-import * as Utils from 'utils/utils.jsx';
-import * as client from 'utils/client.jsx';
-import * as AsyncClient from 'utils/async_client.jsx';
-import ChannelStore from 'stores/channel_store.jsx';
 import LoadingScreen from './loading_screen.jsx';
 import NewChannelFlow from './new_channel_flow.jsx';
 
+import ChannelStore from 'stores/channel_store.jsx';
+
+import * as Utils from 'utils/utils.jsx';
+import * as AsyncClient from 'utils/async_client.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
+
 import {FormattedMessage} from 'react-intl';
 import {browserHistory} from 'react-router';
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 import loadingGif from 'images/load.gif';
 
@@ -22,8 +27,6 @@ function getStateFromStores() {
     };
 }
 
-import React from 'react';
-
 export default class MoreChannels extends React.Component {
     constructor(props) {
         super(props);
@@ -32,6 +35,8 @@ export default class MoreChannels extends React.Component {
         this.handleJoin = this.handleJoin.bind(this);
         this.handleNewChannel = this.handleNewChannel.bind(this);
         this.createChannelRow = this.createChannelRow.bind(this);
+
+        this.shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate.bind(this);
 
         var initState = getStateFromStores();
         initState.channelType = '';
@@ -62,7 +67,8 @@ export default class MoreChannels extends React.Component {
     }
     handleJoin(channel, channelIndex) {
         this.setState({joiningChannel: channelIndex});
-        client.joinChannel(channel.id,
+        GlobalActions.emitJoinChannelEvent(
+            channel,
             () => {
                 $(ReactDOM.findDOMNode(this.refs.modal)).modal('hide');
                 browserHistory.push(Utils.getTeamURLNoOriginFromAddressBar() + '/channels/' + channel.name);

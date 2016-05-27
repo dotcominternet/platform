@@ -6,7 +6,7 @@ import {Modal} from 'react-bootstrap';
 import SettingItemMin from './setting_item_min.jsx';
 import SettingItemMax from './setting_item_max.jsx';
 
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
 
 import {FormattedMessage} from 'react-intl';
@@ -60,7 +60,7 @@ export default class ChannelNotificationsModal extends React.Component {
         data.desktop = notifyLevel;
 
         //TODO: This should be moved to event_helpers
-        Client.updateNotifyProps(data,
+        Client.updateChannelNotifyProps(data,
             () => {
                 // YUCK
                 var member = ChannelStore.getMember(channelId);
@@ -182,7 +182,6 @@ export default class ChannelNotificationsModal extends React.Component {
 
             const handleUpdateSection = function updateSection(e) {
                 this.updateSection('');
-                this.onListenerChange();
                 e.preventDefault();
             }.bind(this);
 
@@ -252,7 +251,7 @@ export default class ChannelNotificationsModal extends React.Component {
         };
 
         //TODO: This should be fixed, moved to event_helpers
-        Client.updateNotifyProps(data,
+        Client.updateChannelNotifyProps(data,
             () => {
                 // Yuck...
                 var member = ChannelStore.getMember(channelId);
@@ -289,10 +288,10 @@ export default class ChannelNotificationsModal extends React.Component {
                                 checked={this.state.unreadLevel === 'all'}
                                 onChange={this.handleUpdateMarkUnreadLevel.bind(this, 'all')}
                             />
-                                <FormattedMessage
-                                    id='channel_notifications.allUnread'
-                                    defaultMessage='For all unread messages'
-                                />
+                            <FormattedMessage
+                                id='channel_notifications.allUnread'
+                                defaultMessage='For all unread messages'
+                            />
                         </label>
                         <br/>
                     </div>
@@ -312,7 +311,6 @@ export default class ChannelNotificationsModal extends React.Component {
 
             const handleUpdateSection = function handleUpdateSection(e) {
                 this.updateSection('');
-                this.onListenerChange();
                 e.preventDefault();
             }.bind(this);
 

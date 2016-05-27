@@ -4,7 +4,9 @@
 import $ from 'jquery';
 import * as Utils from 'utils/utils.jsx';
 import TimeSince from './time_since.jsx';
-import * as GlobalActions from 'action_creators/global_actions.jsx';
+import * as GlobalActions from 'actions/global_actions.jsx';
+import TeamStore from 'stores/team_store.jsx';
+import UserStore from 'stores/user_store.jsx';
 
 import Constants from 'utils/constants.jsx';
 
@@ -30,7 +32,8 @@ export default class PostInfo extends React.Component {
     createDropdown() {
         var post = this.props.post;
         var isOwner = this.props.currentUser.id === post.user_id;
-        var isAdmin = Utils.isAdmin(this.props.currentUser.roles);
+        var isAdmin = TeamStore.isTeamAdminForCurrentTeam() || UserStore.isSystemAdminForCurrentUser();
+        const isSystemMessage = post.type && post.type.startsWith(Constants.SYSTEM_MESSAGE_PREFIX);
 
         if (post.state === Constants.POST_FAILED || post.state === Constants.POST_LOADING || Utils.isPostEphemeral(post)) {
             return '';
@@ -106,7 +109,7 @@ export default class PostInfo extends React.Component {
             );
         }
 
-        if (isOwner) {
+        if (isOwner && !isSystemMessage) {
             dropdownContents.push(
                 <li
                     key='editPost'
@@ -212,11 +215,12 @@ export default class PostInfo extends React.Component {
         var dropdown = this.createDropdown();
 
         return (
-            <ul className='post__header post__header--info'>
+            <ul className='post__header--info'>
                 <li className='col'>
                     <TimeSince
                         eventTime={post.create_at}
                         sameUser={this.props.sameUser}
+                        compactDisplay={this.props.compactDisplay}
                     />
                 </li>
                 <li className='col col__reply'>
@@ -248,5 +252,6 @@ PostInfo.propTypes = {
     allowReply: React.PropTypes.string.isRequired,
     handleCommentClick: React.PropTypes.func.isRequired,
     sameUser: React.PropTypes.bool.isRequired,
-    currentUser: React.PropTypes.object.isRequired
+    currentUser: React.PropTypes.object.isRequired,
+    compactDisplay: React.PropTypes.bool
 };

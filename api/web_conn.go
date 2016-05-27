@@ -4,12 +4,13 @@
 package api
 
 import (
-	l4g "github.com/alecthomas/log4go"
-	"github.com/dotcominternet/platform/model"
-	"github.com/dotcominternet/platform/store"
-	"github.com/dotcominternet/platform/utils"
-	"github.com/gorilla/websocket"
 	"time"
+
+	l4g "github.com/alecthomas/log4go"
+	"github.com/gorilla/websocket"
+
+	"github.com/dotcominternet/platform/model"
+	"github.com/dotcominternet/platform/utils"
 )
 
 const (
@@ -21,20 +22,21 @@ const (
 )
 
 type WebConn struct {
-	WebSocket          *websocket.Conn
-	Send               chan *model.Message
-	TeamId             string
-	UserId             string
-	ChannelAccessCache map[string]bool
+	WebSocket               *websocket.Conn
+	Send                    chan *model.Message
+	SessionToken            string
+	UserId                  string
+	hasPermissionsToChannel map[string]bool
+	hasPermissionsToTeam    map[string]bool
 }
 
-func NewWebConn(ws *websocket.Conn, teamId string, userId string, sessionId string) *WebConn {
+func NewWebConn(ws *websocket.Conn, userId string, sessionToken string) *WebConn {
 	go func() {
-		achan := Srv.Store.User().UpdateUserAndSessionActivity(userId, sessionId, model.GetMillis())
+		achan := Srv.Store.User().UpdateUserAndSessionActivity(userId, sessionToken, model.GetMillis())
 		pchan := Srv.Store.User().UpdateLastPingAt(userId, model.GetMillis())
 
 		if result := <-achan; result.Err != nil {
-			l4g.Error(utils.T("api.web_conn.new_web_conn.last_activity.error"), userId, sessionId, result.Err)
+			l4g.Error(utils.T("api.web_conn.new_web_conn.last_activity.error"), userId, sessionToken, result.Err)
 		}
 
 		if result := <-pchan; result.Err != nil {
@@ -42,7 +44,14 @@ func NewWebConn(ws *websocket.Conn, teamId string, userId string, sessionId stri
 		}
 	}()
 
-	return &WebConn{Send: make(chan *model.Message, 64), WebSocket: ws, UserId: userId, TeamId: teamId, ChannelAccessCache: make(map[string]bool)}
+	return &WebConn{
+		Send:                    make(chan *model.Message, 64),
+		WebSocket:               ws,
+		UserId:                  userId,
+		SessionToken:            sessionToken,
+		hasPermissionsToChannel: make(map[string]bool),
+		hasPermissionsToTeam:    make(map[string]bool),
+	}
 }
 
 func (c *WebConn) readPump() {
@@ -69,9 +78,8 @@ func (c *WebConn) readPump() {
 		if err := c.WebSocket.ReadJSON(&msg); err != nil {
 			return
 		} else {
-			msg.TeamId = c.TeamId
 			msg.UserId = c.UserId
-			PublishAndForget(&msg)
+			go Publish(&msg)
 		}
 	}
 }
@@ -107,19 +115,57 @@ func (c *WebConn) writePump() {
 	}
 }
 
-func (c *WebConn) updateChannelAccessCache(channelId string) bool {
-	allowed := hasPermissionsToChannel(Srv.Store.Channel().CheckPermissionsTo(c.TeamId, channelId, c.UserId))
-	c.ChannelAccessCache[channelId] = allowed
-
-	return allowed
+func (c *WebConn) InvalidateCache() {
+	c.hasPermissionsToChannel = make(map[string]bool)
+	c.hasPermissionsToTeam = make(map[string]bool)
 }
 
-func hasPermissionsToChannel(sc store.StoreChannel) bool {
-	if cresult := <-sc; cresult.Err != nil {
-		return false
-	} else if cresult.Data.(int64) != 1 {
-		return false
+func (c *WebConn) InvalidateCacheForChannel(channelId string) {
+	delete(c.hasPermissionsToChannel, channelId)
+}
+
+func (c *WebConn) HasPermissionsToTeam(teamId string) bool {
+	perm, ok := c.hasPermissionsToTeam[teamId]
+	if !ok {
+		session := GetSession(c.SessionToken)
+		if session == nil {
+			perm = false
+			c.hasPermissionsToTeam[teamId] = perm
+		} else {
+			member := session.GetTeamByTeamId(teamId)
+
+			if member != nil {
+				perm = true
+				c.hasPermissionsToTeam[teamId] = perm
+			} else {
+				perm = true
+				c.hasPermissionsToTeam[teamId] = perm
+			}
+
+		}
 	}
 
-	return true
+	return perm
+}
+
+func (c *WebConn) HasPermissionsToChannel(channelId string) bool {
+	perm, ok := c.hasPermissionsToChannel[channelId]
+	if !ok {
+		if cresult := <-Srv.Store.Channel().CheckPermissionsToNoTeam(channelId, c.UserId); cresult.Err != nil {
+			perm = false
+			c.hasPermissionsToChannel[channelId] = perm
+		} else {
+			count := cresult.Data.(int64)
+
+			if count == 1 {
+				perm = true
+				c.hasPermissionsToChannel[channelId] = perm
+			} else {
+				perm = false
+				c.hasPermissionsToChannel[channelId] = perm
+			}
+		}
+	}
+
+	return perm
 }

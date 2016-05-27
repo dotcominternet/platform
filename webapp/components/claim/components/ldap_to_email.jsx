@@ -2,12 +2,11 @@
 // See License.txt for license information.
 
 import * as Utils from 'utils/utils.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {FormattedMessage} from 'react-intl';
-import {browserHistory} from 'react-router';
 
 export default class LDAPToEmail extends React.Component {
     constructor(props) {
@@ -21,21 +20,21 @@ export default class LDAPToEmail extends React.Component {
         e.preventDefault();
         var state = {};
 
-        const password = ReactDOM.findDOMNode(this.refs.password).value.trim();
+        const password = ReactDOM.findDOMNode(this.refs.password).value;
         if (!password) {
             state.error = Utils.localizeMessage('claim.ldap_to_email.pwdError', 'Please enter your password.');
             this.setState(state);
             return;
         }
 
-        const confirmPassword = ReactDOM.findDOMNode(this.refs.passwordconfirm).value.trim();
+        const confirmPassword = ReactDOM.findDOMNode(this.refs.passwordconfirm).value;
         if (!confirmPassword || password !== confirmPassword) {
             state.error = Utils.localizeMessage('claim.ldap_to_email.pwdNotMatch', 'Passwords do not match.');
             this.setState(state);
             return;
         }
 
-        const ldapPassword = ReactDOM.findDOMNode(this.refs.ldappassword).value.trim();
+        const ldapPassword = ReactDOM.findDOMNode(this.refs.ldappassword).value;
         if (!ldapPassword) {
             state.error = Utils.localizeMessage('claim.ldap_to_email.ldapPasswordError', 'Please enter your LDAP password.');
             this.setState(state);
@@ -45,16 +44,13 @@ export default class LDAPToEmail extends React.Component {
         state.error = null;
         this.setState(state);
 
-        var postData = {};
-        postData.email_password = password;
-        postData.ldap_password = ldapPassword;
-        postData.email = this.props.email;
-        postData.team_name = this.props.teamName;
-
-        Client.ldapToEmail(postData,
+        Client.ldapToEmail(
+            this.props.email,
+            password,
+            ldapPassword,
             (data) => {
                 if (data.follow_link) {
-                    browserHistory.push(data.follow_link);
+                    window.location.href = data.follow_link;
                 }
             },
             (error) => {
@@ -71,6 +67,13 @@ export default class LDAPToEmail extends React.Component {
         var formClass = 'form-group';
         if (error) {
             formClass += ' has-error';
+        }
+
+        let passwordPlaceholder;
+        if (global.window.mm_config.LdapPasswordFieldName) {
+            passwordPlaceholder = global.window.mm_config.LdapPasswordFieldName;
+        } else {
+            passwordPlaceholder = Utils.localizeMessage('claim.ldap_to_email.ldapPwd', 'LDAP Password');
         }
 
         return (
@@ -100,9 +103,9 @@ export default class LDAPToEmail extends React.Component {
                     <p>
                         <FormattedMessage
                             id='claim.ldap_to_email.enterLdapPwd'
-                            defaultMessage='Enter your LDAP password for your {team} {site} email account'
+                            defaultMessage='Enter your {ldapPassword} for your {site} email account'
                             values={{
-                                team: this.props.teamDisplayName,
+                                ldapPassword: passwordPlaceholder,
                                 site: global.window.mm_config.SiteName
                             }}
                         />
@@ -113,7 +116,7 @@ export default class LDAPToEmail extends React.Component {
                             className='form-control'
                             name='ldapPassword'
                             ref='ldappassword'
-                            placeholder={Utils.localizeMessage('claim.ldap_to_email.ldapPwd', 'LDAP Password')}
+                            placeholder={passwordPlaceholder}
                             spellCheck='false'
                         />
                     </div>
@@ -162,7 +165,5 @@ export default class LDAPToEmail extends React.Component {
 LDAPToEmail.defaultProps = {
 };
 LDAPToEmail.propTypes = {
-    email: React.PropTypes.string,
-    teamName: React.PropTypes.string,
-    teamDisplayName: React.PropTypes.string
+    email: React.PropTypes.string
 };

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1'>
     <meta name='robots' content='noindex, nofollow'>
     <meta name='referrer' content='no-referrer'>
@@ -46,7 +47,18 @@
     </script>
 </head>
 <body>
-    <div id='root'/>
+    <div id='root'>
+        <div
+            class='loading-screen'
+            style='relative'
+        >
+            <div class='loading__content'>
+                <div class='round round-1'></div>
+                <div class='round round-2'></div>
+                <div class='round round-3'></div>
+            </div>
+        </div>
+    </div>
     <script>
         window.setup_root();
     </script>

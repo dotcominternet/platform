@@ -2,7 +2,7 @@
 // See License.txt for license information.
 
 import ReactDOM from 'react-dom';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import Constants from 'utils/constants.jsx';
 import {Modal} from 'react-bootstrap';
 
@@ -40,12 +40,9 @@ class ResetPasswordModal extends React.Component {
 
         this.setState({serverError: null});
 
-        var data = {};
-        data.new_password = password;
-        data.name = this.props.team.name;
-        data.user_id = this.props.user.id;
-
-        Client.resetPassword(data,
+        Client.adminResetPassword(
+            this.props.user.id,
+            password,
             () => {
                 this.props.onModalSubmit(ReactDOM.findDOMNode(this.refs.password).value);
             },
@@ -61,7 +58,8 @@ class ResetPasswordModal extends React.Component {
     }
 
     render() {
-        if (this.props.user == null) {
+        const user = this.props.user;
+        if (user == null) {
             return <div/>;
         }
 
@@ -73,6 +71,23 @@ class ResetPasswordModal extends React.Component {
             serverError = <div className='form-group has-error'><p className='input__help error'>{this.state.serverError}</p></div>;
         }
 
+        let title;
+        if (user.auth_service) {
+            title = (
+                <FormattedMessage
+                    id='admin.reset_password.titleSwitch'
+                    defaultMessage='Switch Account to Email/Password'
+                />
+            );
+        } else {
+            title = (
+                <FormattedMessage
+                    id='admin.reset_password.titleReset'
+                    defaultMessage='Reset Password'
+                />
+            );
+        }
+
         return (
             <Modal
                 show={this.props.show}
@@ -80,10 +95,7 @@ class ResetPasswordModal extends React.Component {
             >
                 <Modal.Header closeButton={true}>
                     <Modal.Title>
-                        <FormattedMessage
-                            id='admin.reset_password.title'
-                            defaultMessage='Reset Password'
-                        />
+                        {title}
                     </Modal.Title>
                 </Modal.Header>
                 <form

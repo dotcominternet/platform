@@ -20,8 +20,8 @@
         overflow: visible;
 
         .custom-textarea {
-            min-height: 8em;
             max-height: 60vh;
+            min-height: 8em;
         }
 
         .suggestion-list__content {
@@ -76,7 +76,7 @@
         }
 
         .remove__member {
-            color: $dark-gray;
+            color: inherit;
             float: right;
             font-size: 20px;
             line-height: 0;
@@ -215,6 +215,13 @@
                 max-height: 100%;
                 table-layout: fixed;
                 width: 100%;
+            }
+
+            .modal-image__content {
+                max-height: 85vh;
+                max-width: 90vw;
+                overflow-x: hidden;
+                overflow-y: visible;
             }
 
             .modal-image__wrapper {
@@ -365,6 +372,7 @@
                 bottom: -40px;
                 left: 0;
                 line-height: 40px;
+                max-width: 90vw;
                 padding: 0 10px;
                 position: absolute;
                 right: 0;
@@ -434,6 +442,26 @@
             @include opacity(.8);
             float: right;
             margin-top: 5px;
+        }
+
+        .member-show {
+            @include opacity(.8);
+            float: right;
+            margin-right: 3px;
+            margin-top: 8px;
+        }
+
+        .member-select__container {
+            .member-count {
+                margin: 12px 0 0 3px;
+            }
+
+            select {
+                @include opacity(.8);
+                float: right;
+                margin: 1px 5px 0 2px;
+                width: auto;
+            }
         }
 
         .more-purpose {

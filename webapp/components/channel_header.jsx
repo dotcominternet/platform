@@ -18,6 +18,7 @@ import ToggleModalButton from './toggle_modal_button.jsx';
 
 import ChannelStore from 'stores/channel_store.jsx';
 import UserStore from 'stores/user_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
 import SearchStore from 'stores/search_store.jsx';
 import PreferenceStore from 'stores/preference_store.jsx';
 
@@ -25,7 +26,7 @@ import AppDispatcher from '../dispatcher/app_dispatcher.jsx';
 import * as Utils from 'utils/utils.jsx';
 import * as TextFormatting from 'utils/text_formatting.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import Constants from 'utils/constants.jsx';
 
 import {FormattedMessage} from 'react-intl';
@@ -46,6 +47,7 @@ export default class ChannelHeader extends React.Component {
         this.searchMentions = this.searchMentions.bind(this);
         this.showRenameChannelModal = this.showRenameChannelModal.bind(this);
         this.hideRenameChannelModal = this.hideRenameChannelModal.bind(this);
+        this.openRecentMentions = this.openRecentMentions.bind(this);
 
         const state = this.getStateFromStores();
         state.showEditChannelPurposeModal = false;
@@ -61,7 +63,6 @@ export default class ChannelHeader extends React.Component {
             memberChannel: ChannelStore.getMember(this.props.channelId),
             users: extraInfo.members,
             userCount: extraInfo.member_count,
-            searchVisible: SearchStore.getSearchResults() !== null,
             currentUser: UserStore.getCurrentUser()
         };
     }
@@ -82,6 +83,7 @@ export default class ChannelHeader extends React.Component {
         PreferenceStore.addChangeListener(this.onListenerChange);
         UserStore.addChangeListener(this.onListenerChange);
         $('.sidebar--left .dropdown-menu').perfectScrollbar();
+        document.addEventListener('keydown', this.openRecentMentions);
     }
     componentWillUnmount() {
         ChannelStore.removeChangeListener(this.onListenerChange);
@@ -89,6 +91,7 @@ export default class ChannelHeader extends React.Component {
         SearchStore.removeSearchChangeListener(this.onListenerChange);
         PreferenceStore.removeChangeListener(this.onListenerChange);
         UserStore.removeChangeListener(this.onListenerChange);
+        document.removeEventListener('keydown', this.openRecentMentions);
     }
     onListenerChange() {
         const newState = this.getStateFromStores();
@@ -139,6 +142,12 @@ export default class ChannelHeader extends React.Component {
             is_mention_search: true
         });
     }
+    openRecentMentions(e) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.keyCode === Constants.KeyCodes.M) {
+            e.preventDefault();
+            this.searchMentions(e);
+        }
+    }
     showRenameChannelModal(e) {
         e.preventDefault();
 
@@ -182,7 +191,7 @@ export default class ChannelHeader extends React.Component {
         );
         let channelTitle = channel.display_name;
         const currentId = this.state.currentUser.id;
-        const isAdmin = Utils.isAdmin(this.state.memberChannel.roles) || Utils.isAdmin(this.state.currentUser.roles);
+        const isAdmin = Utils.isAdmin(this.state.memberChannel.roles) || TeamStore.isTeamAdminForCurrentTeam() || UserStore.isSystemAdminForCurrentUser();
         const isDirect = (this.state.channel.type === 'D');
 
         if (isDirect) {
@@ -409,7 +418,8 @@ export default class ChannelHeader extends React.Component {
                 }
             }
 
-            if (!ChannelStore.isDefault(channel)) {
+            const canLeave = channel.type === Constants.PRIVATE_CHANNEL ? this.state.userCount > 1 : true;
+            if (!ChannelStore.isDefault(channel) && canLeave) {
                 dropdownContents.push(
                     <li
                         key='leave_channel'
@@ -469,11 +479,11 @@ export default class ChannelHeader extends React.Component {
                                         overlay={popoverContent}
                                         ref='headerOverlay'
                                     >
-                                    <div
-                                        onClick={TextFormatting.handleClick}
-                                        className='description'
-                                        dangerouslySetInnerHTML={{__html: TextFormatting.formatText(channel.header, {singleline: true, mentionHighlight: false})}}
-                                    />
+                                        <div
+                                            onClick={TextFormatting.handleClick}
+                                            className='description'
+                                            dangerouslySetInnerHTML={{__html: TextFormatting.formatText(channel.header, {singleline: true, mentionHighlight: false})}}
+                                        />
                                     </OverlayTrigger>
                                 </div>
                             </th>

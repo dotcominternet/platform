@@ -3,7 +3,7 @@
 
 import UserStore from 'stores/user_store.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
 import * as Utils from 'utils/utils.jsx';
 import ConfirmModal from './confirm_modal.jsx';
@@ -38,12 +38,12 @@ export default class TeamMembersDropdown extends React.Component {
         if (this.props.user.id === me.id) {
             this.handleDemote(this.props.user, '');
         } else {
-            const data = {
-                user_id: this.props.user.id,
-                new_roles: ''
-            };
-            Client.updateRoles(data,
+            Client.updateRoles(
+                this.props.teamMember.team_id,
+                this.props.user.id,
+                '',
                 () => {
+                    AsyncClient.getTeamMembers(TeamStore.getCurrentId());
                     AsyncClient.getProfiles();
                 },
                 (err) => {
@@ -55,6 +55,7 @@ export default class TeamMembersDropdown extends React.Component {
     handleMakeActive() {
         Client.updateActive(this.props.user.id, true,
             () => {
+                AsyncClient.getTeamMembers(TeamStore.getCurrentId());
                 AsyncClient.getProfiles();
                 AsyncClient.getChannelExtraInfo(ChannelStore.getCurrentId());
             },
@@ -66,6 +67,7 @@ export default class TeamMembersDropdown extends React.Component {
     handleMakeNotActive() {
         Client.updateActive(this.props.user.id, false,
             () => {
+                AsyncClient.getTeamMembers(TeamStore.getCurrentId());
                 AsyncClient.getProfiles();
                 AsyncClient.getChannelExtraInfo(ChannelStore.getCurrentId());
             },
@@ -79,13 +81,12 @@ export default class TeamMembersDropdown extends React.Component {
         if (this.props.user.id === me.id) {
             this.handleDemote(this.props.user, 'admin');
         } else {
-            const data = {
-                user_id: this.props.user.id,
-                new_roles: 'admin'
-            };
-
-            Client.updateRoles(data,
+            Client.updateRoles(
+                this.props.teamMember.team_id,
+                this.props.user.id,
+                'admin',
                 () => {
+                    AsyncClient.getTeamMembers(TeamStore.getCurrentId());
                     AsyncClient.getProfiles();
                 },
                 (err) => {
@@ -94,12 +95,13 @@ export default class TeamMembersDropdown extends React.Component {
             );
         }
     }
-    handleDemote(user, role) {
+    handleDemote(user, role, newRole) {
         this.setState({
             serverError: this.state.serverError,
             showDemoteModal: true,
             user,
-            role
+            role,
+            newRole
         });
     }
     handleDemoteCancel() {
@@ -107,17 +109,19 @@ export default class TeamMembersDropdown extends React.Component {
             serverError: null,
             showDemoteModal: false,
             user: null,
-            role: null
+            role: null,
+            newRole: null
         });
     }
     handleDemoteSubmit() {
-        const data = {
-            user_id: this.props.user.id,
-            new_roles: this.state.role
-        };
-
-        Client.updateRoles(data,
+        Client.updateRoles(
+            this.props.teamMember.team_id,
+            this.props.user.id,
+            this.state.newRole,
             () => {
+                AsyncClient.getTeamMembers(TeamStore.getCurrentId());
+                AsyncClient.getProfiles();
+
                 const teamUrl = TeamStore.getCurrentTeamUrl();
                 if (teamUrl) {
                     browserHistory.push(teamUrl);
@@ -140,6 +144,7 @@ export default class TeamMembersDropdown extends React.Component {
             );
         }
 
+        const teamMember = this.props.teamMember;
         const user = this.props.user;
         let currentRoles = (
             <FormattedMessage
@@ -148,28 +153,26 @@ export default class TeamMembersDropdown extends React.Component {
             />
         );
 
-        if (user.roles.length > 0) {
-            if (Utils.isSystemAdmin(user.roles)) {
-                currentRoles = (
-                    <FormattedMessage
-                        id='team_members_dropdown.systemAdmin'
-                        defaultMessage='System Admin'
-                    />
-                );
-            } else if (Utils.isAdmin(user.roles)) {
-                currentRoles = (
-                    <FormattedMessage
-                        id='team_members_dropdown.teamAdmin'
-                        defaultMessage='Team Admin'
-                    />
-                );
-            } else {
-                currentRoles = user.roles.charAt(0).toUpperCase() + user.roles.slice(1);
-            }
+        if (teamMember.roles.length > 0 && Utils.isAdmin(teamMember.roles)) {
+            currentRoles = (
+                <FormattedMessage
+                    id='team_members_dropdown.teamAdmin'
+                    defaultMessage='Team Admin'
+                />
+            );
         }
 
-        let showMakeMember = user.roles === 'admin' || user.roles === 'system_admin';
-        let showMakeAdmin = user.roles === '' || user.roles === 'system_admin';
+        if (user.roles.length > 0 && Utils.isSystemAdmin(user.roles)) {
+            currentRoles = (
+                <FormattedMessage
+                    id='team_members_dropdown.systemAdmin'
+                    defaultMessage='System Admin'
+                />
+            );
+        }
+
+        let showMakeMember = teamMember.roles === 'admin' || user.roles === 'system_admin';
+        let showMakeAdmin = teamMember.roles === '' && user.roles !== 'system_admin';
         let showMakeActive = false;
         let showMakeNotActive = user.roles !== 'system_admin';
 
@@ -224,38 +227,38 @@ export default class TeamMembersDropdown extends React.Component {
 
         let makeActive = null;
         if (showMakeActive) {
-            makeActive = (
-                <li role='presentation'>
-                    <a
-                        role='menuitem'
-                        href='#'
-                        onClick={this.handleMakeActive}
-                    >
-                        <FormattedMessage
-                            id='team_members_dropdown.makeActive'
-                            defaultMessage='Make Active'
-                        />
-                    </a>
-                </li>
-            );
+            // makeActive = (
+            //     <li role='presentation'>
+            //         <a
+            //             role='menuitem'
+            //             href='#'
+            //             onClick={this.handleMakeActive}
+            //         >
+            //             <FormattedMessage
+            //                 id='team_members_dropdown.makeActive'
+            //                 defaultMessage='Make Active'
+            //             />
+            //         </a>
+            //     </li>
+            // );
         }
 
         let makeNotActive = null;
         if (showMakeNotActive) {
-            makeNotActive = (
-                <li role='presentation'>
-                    <a
-                        role='menuitem'
-                        href='#'
-                        onClick={this.handleMakeNotActive}
-                    >
-                        <FormattedMessage
-                            id='team_members_dropdown.makeInactive'
-                            defaultMessage='Make Inactive'
-                        />
-                    </a>
-                </li>
-            );
+            // makeNotActive = (
+            //     <li role='presentation'>
+            //         <a
+            //             role='menuitem'
+            //             href='#'
+            //             onClick={this.handleMakeNotActive}
+            //         >
+            //             <FormattedMessage
+            //                 id='team_members_dropdown.makeInactive'
+            //                 defaultMessage='Make Inactive'
+            //             />
+            //         </a>
+            //     </li>
+            // );
         }
         const me = UserStore.getCurrentUser();
         let makeDemoteModal = null;
@@ -331,5 +334,6 @@ export default class TeamMembersDropdown extends React.Component {
 }
 
 TeamMembersDropdown.propTypes = {
-    user: React.PropTypes.object.isRequired
+    user: React.PropTypes.object.isRequired,
+    teamMember: React.PropTypes.object.isRequired
 };

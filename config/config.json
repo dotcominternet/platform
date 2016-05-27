@@ -30,11 +30,12 @@
         "MaxUsersPerTeam": 50,
         "EnableTeamCreation": true,
         "EnableUserCreation": true,
+        "EnableOpenServer": false,
         "RestrictCreationToDomains": "",
         "RestrictTeamNames": true,
-        "EnableTeamListing": false,
         "EnableCustomBrand": false,
-        "CustomBrandText": ""
+        "CustomBrandText": "",
+        "RestrictDirectMessage": "any"
     },
     "SqlSettings": {
         "DriverName": "mysql",
@@ -54,6 +55,7 @@
         "FileLocation": ""
     },
     "FileSettings": {
+        "MaxFileSize": 52428800,
         "DriverName": "local",
         "Directory": "./data/",
         "EnablePublicLink": false,
@@ -77,7 +79,7 @@
     "EmailSettings": {
         "EnableSignUpWithEmail": true,
         "EnableSignInWithEmail": true,
-        "EnableSignInWithUsername": false,
+        "EnableSignInWithUsername": true,
         "SendEmailNotifications": false,
         "RequireEmailVerification": false,
         "FeedbackName": "",
@@ -105,11 +107,11 @@
         "ShowFullName": true
     },
     "SupportSettings": {
-        "TermsOfServiceLink": "/static/help/terms.html",
-        "PrivacyPolicyLink": "/static/help/privacy.html",
-        "AboutLink": "/static/help/about.html",
-        "HelpLink": "/static/help/help.html",
-        "ReportAProblemLink": "/static/help/report_problem.html",
+        "TermsOfServiceLink": "https://about.mattermost.com/default-terms/",
+        "PrivacyPolicyLink": "https://about.mattermost.com/default-privacy-policy/",
+        "AboutLink": "https://about.mattermost.com/default-about/",
+        "HelpLink": "https://about.mattermost.com/default-help/",
+        "ReportAProblemLink": "https://about.mattermost.com/default-report-problem/",
         "SupportEmail": "feedback@mattermost.com"
     },
     "GitLabSettings": {
@@ -143,9 +145,11 @@
         "LastNameAttribute": "",
         "EmailAttribute": "",
         "UsernameAttribute": "",
+        "NicknameAttribute": "",
         "IdAttribute": "",
         "SkipCertificateVerification": false,
-        "QueryTimeout": 60
+        "QueryTimeout": 60,
+        "LoginFieldName": ""
     },
     "ComplianceSettings": {
         "Enable": false,

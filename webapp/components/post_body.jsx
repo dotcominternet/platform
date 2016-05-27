@@ -1,64 +1,39 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
-import ReactDOM from 'react-dom';
 import FileAttachmentList from './file_attachment_list.jsx';
 import UserStore from 'stores/user_store.jsx';
 import * as Utils from 'utils/utils.jsx';
 import Constants from 'utils/constants.jsx';
 import * as TextFormatting from 'utils/text_formatting.jsx';
-import twemoji from 'twemoji';
 import PostBodyAdditionalContent from './post_body_additional_content.jsx';
+import PendingPostActions from './pending_post_actions.jsx';
 
-import {intlShape, injectIntl, defineMessages, FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'react-intl';
 
 import loadingGif from 'images/load.gif';
 
-const holders = defineMessages({
-    plusOne: {
-        id: 'post_body.plusOne',
-        defaultMessage: ' plus 1 other file'
-    },
-    plusMore: {
-        id: 'post_body.plusMore',
-        defaultMessage: ' plus {count} other files'
-    }
-});
-
 import React from 'react';
 
-class PostBody extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.parseEmojis = this.parseEmojis.bind(this);
-    }
-
-    getAllChildNodes(nodeIn) {
-        var textNodes = [];
-
-        function getTextNodes(node) {
-            textNodes.push(node);
-
-            for (var i = 0, len = node.childNodes.length; i < len; ++i) {
-                getTextNodes(node.childNodes[i]);
-            }
+export default class PostBody extends React.Component {
+    shouldComponentUpdate(nextProps) {
+        if (!Utils.areObjectsEqual(nextProps.post, this.props.post)) {
+            return true;
         }
 
-        getTextNodes(nodeIn);
-        return textNodes;
-    }
+        if (!Utils.areObjectsEqual(nextProps.parentPost, this.props.parentPost)) {
+            return true;
+        }
 
-    parseEmojis() {
-        twemoji.parse(ReactDOM.findDOMNode(this), {
-            className: 'emoticon',
-            base: '',
-            folder: Constants.EMOJI_PATH
-        });
-    }
+        if (!Utils.areObjectsEqual(nextProps.compactDisplay, this.props.compactDisplay)) {
+            return true;
+        }
 
-    componentDidMount() {
-        this.parseEmojis();
+        if (nextProps.handleCommentClick.toString() !== this.props.handleCommentClick.toString()) {
+            return true;
+        }
+
+        return false;
     }
 
     collapsePosts() {
@@ -74,7 +49,6 @@ class PostBody extends React.Component {
     }
 
     render() {
-        const {formatMessage} = this.props.intl;
         const post = this.props.post;
         const filenames = this.props.post.filenames;
         const parentPost = this.props.parentPost;
@@ -118,9 +92,9 @@ class PostBody extends React.Component {
                 message = parentPost.filenames[0].split('/').pop();
 
                 if (parentPost.filenames.length === 2) {
-                    message += formatMessage(holders.plusOne);
+                    message += Utils.localizeMessage('post_body.plusOne', ' plus 1 other file');
                 } else if (parentPost.filenames.length > 2) {
-                    message += formatMessage(holders.plusMore, {count: (parentPost.filenames.length - 1)});
+                    message += Utils.localizeMessage('post_body.plusMore', ' plus {count} other files').replace('{count}', (parentPost.filenames.length - 1).toString());
                 }
             }
 
@@ -131,8 +105,8 @@ class PostBody extends React.Component {
                             id='post_body.commentedOn'
                             defaultMessage='Commented on {name}{apostrophe} message: '
                             values={{
-                                name: (name),
-                                apostrophe: apostrophe
+                                name,
+                                apostrophe
                             }}
                         />
                         <a
@@ -149,18 +123,7 @@ class PostBody extends React.Component {
         let loading;
         if (post.state === Constants.POST_FAILED) {
             postClass += ' post--fail';
-            loading = (
-                <a
-                    className='theme post-retry pull-right'
-                    href='#'
-                    onClick={this.props.retryPost}
-                >
-                    <FormattedMessage
-                        id='post_body.retry'
-                        defaultMessage='Retry'
-                    />
-                </a>
-            );
+            loading = <PendingPostActions post={this.props.post}/>;
         } else if (post.state === Constants.POST_LOADING) {
             postClass += ' post-waiting';
             loading = (
@@ -175,9 +138,11 @@ class PostBody extends React.Component {
         if (filenames && filenames.length > 0) {
             fileAttachmentHolder = (
                 <FileAttachmentList
+
                     filenames={filenames}
                     channelId={post.channel_id}
                     userId={post.user_id}
+                    compactDisplay={this.props.compactDisplay}
                 />
             );
         }
@@ -232,11 +197,9 @@ class PostBody extends React.Component {
 }
 
 PostBody.propTypes = {
-    intl: intlShape.isRequired,
     post: React.PropTypes.object.isRequired,
     parentPost: React.PropTypes.object,
     retryPost: React.PropTypes.func.isRequired,
-    handleCommentClick: React.PropTypes.func.isRequired
+    handleCommentClick: React.PropTypes.func.isRequired,
+    compactDisplay: React.PropTypes.bool
 };
-
-export default injectIntl(PostBody);

@@ -9,7 +9,7 @@ import SettingPicture from '../setting_picture.jsx';
 import UserStore from 'stores/user_store.jsx';
 import ErrorStore from 'stores/error_store.jsx';
 
-import * as Client from 'utils/client.jsx';
+import Client from 'utils/web_client.jsx';
 import Constants from 'utils/constants.jsx';
 import * as AsyncClient from 'utils/async_client.jsx';
 import * as Utils from 'utils/utils.jsx';
@@ -23,7 +23,7 @@ const holders = defineMessages({
     },
     usernameRestrictions: {
         id: 'user.settings.general.usernameRestrictions',
-        defaultMessage: "Username must begin with a letter, and contain between {min} to {max} lowercase characters made up of numbers, letters, and the symbols '.', '-' and '_'."
+        defaultMessage: "Username must begin with a letter, and contain between {min} to {max} lowercase characters made up of numbers, letters, and the symbols '.', '-', and '_'."
     },
     validEmail: {
         id: 'user.settings.general.validEmail',
@@ -160,6 +160,11 @@ class UserSettingsGeneralTab extends React.Component {
         const email = this.state.email.trim().toLowerCase();
         const confirmEmail = this.state.confirmEmail.trim().toLowerCase();
 
+        if (user.email === email) {
+            this.updateSection('');
+            return;
+        }
+
         const {formatMessage} = this.props.intl;
         if (email === '' || !Utils.isEmail(email)) {
             this.setState({emailError: formatMessage(holders.validEmail), clientError: '', serverError: ''});
@@ -168,11 +173,6 @@ class UserSettingsGeneralTab extends React.Component {
 
         if (email !== confirmEmail) {
             this.setState({emailError: formatMessage(holders.emailMatch), clientError: '', serverError: ''});
-            return;
-        }
-
-        if (user.email === email) {
-            this.updateSection('');
             return;
         }
 
@@ -225,15 +225,13 @@ class UserSettingsGeneralTab extends React.Component {
             return;
         }
 
-        var formData = new FormData();
-        formData.append('image', picture, picture.name);
         this.setState({loadingPicture: true});
 
-        Client.uploadProfileImage(formData,
+        Client.uploadProfileImage(picture,
             () => {
+                this.updateSection('');
                 this.submitActive = false;
                 AsyncClient.getMe();
-                window.location.reload();
             },
             (err) => {
                 var state = this.setupInitialState(this.props);
@@ -344,7 +342,7 @@ class UserSettingsGeneralTab extends React.Component {
                             <div className='col-sm-7'>
                                 <input
                                     className='form-control'
-                                    type='text'
+                                    type='email'
                                     onChange={this.updateEmail}
                                     value={this.state.email}
                                 />
@@ -365,7 +363,7 @@ class UserSettingsGeneralTab extends React.Component {
                             <div className='col-sm-7'>
                                 <input
                                     className='form-control'
-                                    type='text'
+                                    type='email'
                                     onChange={this.updateConfirmEmail}
                                     value={this.state.confirmEmail}
                                 />
@@ -515,85 +513,100 @@ class UserSettingsGeneralTab extends React.Component {
         const inputs = [];
 
         if (this.props.activeSection === 'name') {
-            inputs.push(
-                <div
-                    key='firstNameSetting'
-                    className='form-group'
-                >
-                    <label className='col-sm-5 control-label'>
-                        <FormattedMessage
-                            id='user.settings.general.firstName'
-                            defaultMessage='First Name'
-                        />
-                    </label>
-                    <div className='col-sm-7'>
-                        <input
-                            className='form-control'
-                            type='text'
-                            onChange={this.updateFirstName}
-                            value={this.state.firstName}
-                        />
+            let extraInfo;
+            let submit = null;
+            if (this.props.user.auth_service === '') {
+                inputs.push(
+                    <div
+                        key='firstNameSetting'
+                        className='form-group'
+                    >
+                        <label className='col-sm-5 control-label'>
+                            <FormattedMessage
+                                id='user.settings.general.firstName'
+                                defaultMessage='First Name'
+                            />
+                        </label>
+                        <div className='col-sm-7'>
+                            <input
+                                className='form-control'
+                                type='text'
+                                onChange={this.updateFirstName}
+                                value={this.state.firstName}
+                            />
+                        </div>
                     </div>
-                </div>
-            );
+                );
 
-            inputs.push(
-                <div
-                    key='lastNameSetting'
-                    className='form-group'
-                >
-                    <label className='col-sm-5 control-label'>
-                        <FormattedMessage
-                            id='user.settings.general.lastName'
-                            defaultMessage='Last Name'
-                        />
-                    </label>
-                    <div className='col-sm-7'>
-                        <input
-                            className='form-control'
-                            type='text'
-                            onChange={this.updateLastName}
-                            value={this.state.lastName}
-                        />
+                inputs.push(
+                    <div
+                        key='lastNameSetting'
+                        className='form-group'
+                    >
+                        <label className='col-sm-5 control-label'>
+                            <FormattedMessage
+                                id='user.settings.general.lastName'
+                                defaultMessage='Last Name'
+                            />
+                        </label>
+                        <div className='col-sm-7'>
+                            <input
+                                className='form-control'
+                                type='text'
+                                onChange={this.updateLastName}
+                                value={this.state.lastName}
+                            />
+                        </div>
                     </div>
-                </div>
-            );
+                );
 
-            function notifClick(e) {
-                e.preventDefault();
-                this.updateSection('');
-                this.props.updateTab('notifications');
+                function notifClick(e) {
+                    e.preventDefault();
+                    this.updateSection('');
+                    this.props.updateTab('notifications');
+                }
+
+                const notifLink = (
+                    <a
+                        href='#'
+                        onClick={notifClick.bind(this)}
+                    >
+                        <FormattedMessage
+                            id='user.settings.general.notificationsLink'
+                            defaultMessage='Notifications'
+                        />
+                    </a>
+                );
+
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.notificationsExtra'
+                            defaultMessage='By default, you will receive mention notifications when someone types your first name. Go to {notify} settings to change this default.'
+                            values={{
+                                notify: (notifLink)
+                            }}
+                        />
+                    </span>
+                );
+
+                submit = this.submitName;
+            } else {
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.field_handled_externally'
+                            defaultMessage='This field is handled through your login provider. If you want to change it, you need to do so though your login provider.'
+                        />
+                    </span>
+                );
             }
-
-            const notifLink = (
-                <a
-                    href='#'
-                    onClick={notifClick.bind(this)}
-                >
-                    <FormattedMessage
-                        id='user.settings.general.notificationsLink'
-                        defaultMessage='Notifications'
-                    />
-                </a>
-            );
-
-            const extraInfo = (
-                <span>
-                    <FormattedMessage
-                        id='user.settings.general.notificationsExtra'
-                        defaultMessage='By default, you will receive mention notifications when someone types your first name. Go to {notify} settings to change this default.'
-                        values={{
-                            notify: (notifLink)
-                        }}
-                    />
-                </span>
-            );
 
             nameSection = (
                 <SettingItemMax
                     title={formatMessage(holders.fullName)}
                     inputs={inputs}
-                    submit={this.submitName}
+                    submit={submit}
                     server_error={serverError}
                     client_error={clientError}
                     updateSection={(e) => {
@@ -634,47 +647,63 @@ class UserSettingsGeneralTab extends React.Component {
 
         let nicknameSection;
         if (this.props.activeSection === 'nickname') {
-            let nicknameLabel = (
-                <FormattedMessage
-                    id='user.settings.general.nickname'
-                    defaultMessage='Nickname'
-                />
-            );
-            if (Utils.isMobile()) {
-                nicknameLabel = '';
-            }
-
-            inputs.push(
-                <div
-                    key='nicknameSetting'
-                    className='form-group'
-                >
-                    <label className='col-sm-5 control-label'>{nicknameLabel}</label>
-                    <div className='col-sm-7'>
-                        <input
-                            className='form-control'
-                            type='text'
-                            onChange={this.updateNickname}
-                            value={this.state.nickname}
+            let extraInfo;
+            let submit = null;
+            if (this.props.user.auth_service === 'ldap' && global.window.mm_config.NicknameAttributeSet) {
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.field_handled_externally'
+                            defaultMessage='This field is handled through your login provider. If you want to change it, you need to do so though your login provider.'
                         />
-                    </div>
-                </div>
-            );
-
-            const extraInfo = (
-                <span>
+                    </span>
+                );
+            } else {
+                let nicknameLabel = (
                     <FormattedMessage
-                        id='user.settings.general.nicknameExtra'
-                        defaultMessage='Use Nickname for a name you might be called that is different from your first name and username. This is most often used when two or more people have similar sounding names and usernames.'
+                        id='user.settings.general.nickname'
+                        defaultMessage='Nickname'
                     />
-                </span>
-            );
+                );
+                if (Utils.isMobile()) {
+                    nicknameLabel = '';
+                }
+
+                inputs.push(
+                    <div
+                        key='nicknameSetting'
+                        className='form-group'
+                    >
+                        <label className='col-sm-5 control-label'>{nicknameLabel}</label>
+                        <div className='col-sm-7'>
+                            <input
+                                className='form-control'
+                                type='text'
+                                onChange={this.updateNickname}
+                                value={this.state.nickname}
+                                autoCapitalize='off'
+                            />
+                        </div>
+                    </div>
+                );
+
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.nicknameExtra'
+                            defaultMessage='Use Nickname for a name you might be called that is different from your first name and username. This is most often used when two or more people have similar sounding names and usernames.'
+                        />
+                    </span>
+                );
+
+                submit = this.submitNickname;
+            }
 
             nicknameSection = (
                 <SettingItemMax
                     title={formatMessage(holders.nickname)}
                     inputs={inputs}
-                    submit={this.submitNickname}
+                    submit={submit}
                     server_error={serverError}
                     client_error={clientError}
                     updateSection={(e) => {
@@ -711,48 +740,64 @@ class UserSettingsGeneralTab extends React.Component {
 		/*
         let usernameSection;
         if (this.props.activeSection === 'username') {
-            let usernameLabel = (
-                <FormattedMessage
-                    id='user.settings.general.username'
-                    defaultMessage='Username'
-                />
-            );
-            if (Utils.isMobile()) {
-                usernameLabel = '';
-            }
-
-            inputs.push(
-                <div
-                    key='usernameSetting'
-                    className='form-group'
-                >
-                    <label className='col-sm-5 control-label'>{usernameLabel}</label>
-                    <div className='col-sm-7'>
-                        <input
-                            maxLength={Constants.MAX_USERNAME_LENGTH}
-                            className='form-control'
-                            type='text'
-                            onChange={this.updateUsername}
-                            value={this.state.username}
-                        />
-                    </div>
-                </div>
-            );
-
-            const extraInfo = (
-                <span>
+            let extraInfo;
+            let submit = null;
+            if (this.props.user.auth_service === '') {
+                let usernameLabel = (
                     <FormattedMessage
-                        id='user.settings.general.usernameInfo'
-                        defaultMessage='Pick something easy for teammates to recognize and recall.'
+                        id='user.settings.general.username'
+                        defaultMessage='Username'
                     />
-                </span>
-            );
+                );
+                if (Utils.isMobile()) {
+                    usernameLabel = '';
+                }
+
+                inputs.push(
+                    <div
+                        key='usernameSetting'
+                        className='form-group'
+                    >
+                        <label className='col-sm-5 control-label'>{usernameLabel}</label>
+                        <div className='col-sm-7'>
+                            <input
+                                maxLength={Constants.MAX_USERNAME_LENGTH}
+                                className='form-control'
+                                type='text'
+                                onChange={this.updateUsername}
+                                value={this.state.username}
+                                autoCapitalize='off'
+                            />
+                        </div>
+                    </div>
+                );
+
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.usernameInfo'
+                            defaultMessage='Pick something easy for teammates to recognize and recall.'
+                        />
+                    </span>
+                );
+
+                submit = this.submitUsername;
+            } else {
+                extraInfo = (
+                    <span>
+                        <FormattedMessage
+                            id='user.settings.general.field_handled_externally'
+                            defaultMessage='This field is handled through your login provider. If you want to change it, you need to do so though your login provider.'
+                        />
+                    </span>
+                );
+            }
 
             usernameSection = (
                 <SettingItemMax
                     title={formatMessage(holders.username)}
                     inputs={inputs}
-                    submit={this.submitUsername}
+                    submit={submit}
                     server_error={serverError}
                     client_error={clientError}
                     updateSection={(e) => {
@@ -783,7 +828,7 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingPicture
                     title={formatMessage(holders.profilePicture)}
                     submit={this.submitPicture}
-                    src={'/api/v1/users/' + user.id + '/image?time=' + user.last_picture_update}
+                    src={Client.getUsersRoute() + '/' + user.id + '/image?time=' + user.last_picture_update}
                     server_error={serverError}
                     client_error={clientError}
                     updateSection={(e) => {

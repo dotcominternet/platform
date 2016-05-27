@@ -6,21 +6,30 @@ import EventEmitter from 'events';
 
 import Constants from 'utils/constants.jsx';
 const ActionTypes = Constants.ActionTypes;
-import BrowserStore from './browser_store.jsx';
 
+const CHANGE_EVENT_DM_LIST = 'change_dm_list';
 const CHANGE_EVENT = 'change';
 const CHANGE_EVENT_SESSIONS = 'change_sessions';
 const CHANGE_EVENT_AUDITS = 'change_audits';
 const CHANGE_EVENT_STATUSES = 'change_statuses';
 
+var Utils;
+
 class UserStoreClass extends EventEmitter {
     constructor() {
         super();
+        this.clear();
+    }
+
+    clear() {
+        this.profiles_for_dm_list = {};
         this.profiles = {};
+        this.direct_profiles = {};
         this.statuses = {};
         this.sessions = {};
         this.audits = {};
         this.currentUserId = '';
+        this.noAccounts = false;
     }
 
     emitChange(userId) {
@@ -33,6 +42,18 @@ class UserStoreClass extends EventEmitter {
 
     removeChangeListener(callback) {
         this.removeListener(CHANGE_EVENT, callback);
+    }
+
+    emitDmListChange() {
+        this.emit(CHANGE_EVENT_DM_LIST);
+    }
+
+    addDmListChangeListener(callback) {
+        this.on(CHANGE_EVENT_DM_LIST, callback);
+    }
+
+    removeDmListChangeListener(callback) {
+        this.removeListener(CHANGE_EVENT_DM_LIST, callback);
     }
 
     emitSessionsChange() {
@@ -91,24 +112,16 @@ class UserStoreClass extends EventEmitter {
         return null;
     }
 
-    getLastEmail() {
-        return BrowserStore.getGlobalItem('last_email', '');
-    }
-
-    setLastEmail(email) {
-        BrowserStore.setGlobalItem('last_email', email);
-    }
-
-    getLastUsername() {
-        return BrowserStore.getGlobalItem('last_username', '');
-    }
-
-    setLastUsername(username) {
-        BrowserStore.setGlobalItem('last_username', username);
-    }
-
     hasProfile(userId) {
-        return this.getProfiles()[userId] != null;
+        return this.getProfile(userId) != null;
+    }
+
+    hasTeamProfile(userId) {
+        return this.getProfiles()[userId];
+    }
+
+    hasDirectProfile(userId) {
+        return this.getDirectProfiles()[userId];
     }
 
     getProfile(userId) {
@@ -116,7 +129,12 @@ class UserStoreClass extends EventEmitter {
             return this.getCurrentUser();
         }
 
-        return this.getProfiles()[userId];
+        const user = this.getProfiles()[userId];
+        if (user) {
+            return user;
+        }
+
+        return this.getDirectProfiles()[userId];
     }
 
     getProfileByUsername(username) {
@@ -135,6 +153,14 @@ class UserStoreClass extends EventEmitter {
         }
 
         return profileUsernameMap;
+    }
+
+    getDirectProfiles() {
+        return this.direct_profiles;
+    }
+
+    saveDirectProfiles(profiles) {
+        this.direct_profiles = profiles;
     }
 
     getProfiles() {
@@ -178,7 +204,7 @@ class UserStoreClass extends EventEmitter {
         const currentUser = this.profiles[currentId];
         if (currentUser) {
             if (currentId in this.profiles) {
-                delete this.profiles[currentId];
+                Reflect.deleteProperty(this.profiles, currentId);
             }
 
             this.profiles = profiles;
@@ -186,6 +212,29 @@ class UserStoreClass extends EventEmitter {
         } else {
             this.profiles = profiles;
         }
+    }
+
+    getProfilesForDmList() {
+        const currentId = this.getCurrentId();
+        const profiles = [];
+
+        for (const id in this.profiles_for_dm_list) {
+            if (this.profiles_for_dm_list.hasOwnProperty(id) && id !== currentId) {
+                var profile = this.profiles_for_dm_list[id];
+
+                if (profile.delete_at === 0) {
+                    profiles.push(profile);
+                }
+            }
+        }
+
+        profiles.sort((a, b) => a.username.localeCompare(b.username));
+
+        return profiles;
+    }
+
+    saveProfilesForDmList(profiles) {
+        this.profiles_for_dm_list = profiles;
     }
 
     setSessions(sessions) {
@@ -263,6 +312,28 @@ class UserStoreClass extends EventEmitter {
     getStatus(id) {
         return this.getStatuses()[id];
     }
+
+    getNoAccounts() {
+        return this.noAccounts;
+    }
+
+    setNoAccounts(noAccounts) {
+        this.noAccounts = noAccounts;
+    }
+
+    isSystemAdminForCurrentUser() {
+        if (!Utils) {
+            Utils = require('utils/utils.jsx'); //eslint-disable-line global-require
+        }
+
+        var current = this.getCurrentUser();
+
+        if (current) {
+            return Utils.isAdmin(current.roles);
+        }
+
+        return false;
+    }
 }
 
 var UserStore = new UserStoreClass();
@@ -272,8 +343,16 @@ UserStore.dispatchToken = AppDispatcher.register((payload) => {
     var action = payload.action;
 
     switch (action.type) {
+    case ActionTypes.RECEIVED_PROFILES_FOR_DM_LIST:
+        UserStore.saveProfilesForDmList(action.profiles);
+        UserStore.emitDmListChange();
+        break;
     case ActionTypes.RECEIVED_PROFILES:
         UserStore.saveProfiles(action.profiles);
+        UserStore.emitChange();
+        break;
+    case ActionTypes.RECEIVED_DIRECT_PROFILES:
+        UserStore.saveDirectProfiles(action.profiles);
         UserStore.emitChange();
         break;
     case ActionTypes.RECEIVED_ME:

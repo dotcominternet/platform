@@ -35,18 +35,6 @@ class BrowserStoreClass {
         this.isSignallingLogin = this.isSignallingLogin.bind(this);
     }
 
-    checkVersion() {
-        var currentVersion = this.getGlobalItem('storage_version');
-        if (currentVersion !== global.window.mm_config.Version) {
-            this.clearAll();
-            try {
-                this.setGlobalItem('storage_version', global.window.mm_config.Version);
-            } catch (e) {
-                // Do nothing
-            }
-        }
-    }
-
     setItem(name, value) {
         this.setGlobalItem(getPrefix() + name, value);
     }
@@ -170,12 +158,17 @@ class BrowserStoreClass {
     clear() {
         // don't clear the logout id so IE11 can tell which tab sent a logout request
         const logoutId = sessionStorage.getItem('__logout__');
+        const serverVersion = this.getLastServerVersion();
 
         sessionStorage.clear();
         localStorage.clear();
 
         if (logoutId) {
             sessionStorage.setItem('__logout__', logoutId);
+        }
+
+        if (serverVersion) {
+            this.setLastServerVersion(serverVersion);
         }
     }
 

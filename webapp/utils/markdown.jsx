@@ -2,7 +2,6 @@
 // See License.txt for license information.
 
 import * as TextFormatting from './text_formatting.jsx';
-import * as Utils from './utils.jsx';
 import * as syntaxHightlighting from './syntax_hightlighting.jsx';
 
 import marked from 'marked';
@@ -13,40 +12,6 @@ function markdownImageLoaded(image) {
     image.style.height = 'auto';
 }
 window.markdownImageLoaded = markdownImageLoaded;
-
-class MattermostInlineLexer extends marked.InlineLexer {
-    constructor(links, options) {
-        super(links, options);
-
-        this.rules = Object.assign({}, this.rules);
-
-        // modified version of the regex that allows for links starting with www and those surrounded by parentheses
-        // the original is /^[\s\S]+?(?=[\\<!\[_*`~]|https?:\/\/| {2,}\n|$)/
-        this.rules.text = /^[\s\S]+?(?=[\\<!\[_*`~]|https?:\/\/|www\.|\(| {2,}\n|$)/;
-
-        // modified version of the regex that allows links starting with www and those surrounded by parentheses
-        // the original is /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/
-        this.rules.url = /^(\(?(?:https?:\/\/|www\.)[^\s<.][^\s<]*[^<.,:;"'\]\s])/;
-
-        // modified version of the regex that allows <links> starting with www.
-        // the original is /^<([^ >]+(@|:\/)[^ >]+)>/
-        this.rules.autolink = /^<((?:[^ >]+(@|:\/)|www\.)[^ >]+)>/;
-    }
-}
-
-class MattermostParser extends marked.Parser {
-    parse(src) {
-        this.inline = new MattermostInlineLexer(src.links, this.options, this.renderer);
-        this.tokens = src.reverse();
-
-        var out = '';
-        while (this.next()) {
-            out += this.tok();
-        }
-
-        return out;
-    }
-}
 
 class MattermostMarkdownRenderer extends marked.Renderer {
     constructor(options, formattingOptions = {}) {
@@ -110,18 +75,6 @@ class MattermostMarkdownRenderer extends marked.Renderer {
 
     link(href, title, text) {
         let outHref = href;
-        let outText = text;
-        let prefix = '';
-        let suffix = '';
-
-        // some links like https://en.wikipedia.org/wiki/Rendering_(computer_graphics) contain brackets
-        // and we try our best to differentiate those from ones just wrapped in brackets when autolinking
-        if (outHref.startsWith('(') && outHref.endsWith(')') && text === outHref) {
-            prefix = '(';
-            suffix = ')';
-            outText = text.substring(1, text.length - 1);
-            outHref = outHref.substring(1, outHref.length - 1);
-        }
 
         try {
             const unescaped = decodeURIComponent(unescape(href)).replace(/[^\w:]/g, '').toLowerCase();
@@ -137,20 +90,22 @@ class MattermostMarkdownRenderer extends marked.Renderer {
             outHref = `http://${outHref}`;
         }
 
-        let output = '<a class="theme markdown__link" href="' + outHref + '"';
+        let output = '<a class="theme markdown__link" ';
+
+        // special case for links that are inside the app
+        if (outHref.startsWith(global.location.origin)) {
+            output += 'data-link="' + outHref.substring(global.location.origin.length) + '"';
+        } else {
+            output += 'href="' + outHref + '" target="_blank" rel="noreferrer"';
+        }
+
         if (title) {
             output += ' title="' + title + '"';
         }
 
-        if (outHref.lastIndexOf(Utils.getTeamURLFromAddressBar(), 0) === 0) {
-            output += '>';
-        } else {
-            output += ' target="_blank">';
-        }
+        output += '>' + text + '</a>';
 
-        output += outText + '</a>';
-
-        return prefix + output + suffix;
+        return output;
     }
 
     paragraph(text) {
@@ -485,7 +440,7 @@ export function format(text, options) {
 
     const tokens = new MattermostLexer(markdownOptions).lex(text);
 
-    return new MattermostParser(markdownOptions).parse(tokens);
+    return new marked.Parser(markdownOptions).parse(tokens);
 }
 
 // Marked helper functions that should probably just be exported
