@@ -152,32 +152,56 @@ export function getCookie(name) {
 
 var requestedNotificationPermission = false;
 
+export function sendNotification(title, body, destUrl) {
+    try {
+        console.log('Sending notification', title, body); //eslint-disable-line no-console
+        var notification = new Notification(title, {body: body, tag: body, icon: icon50});
+        notification.onclick = () => {
+            window.focus();
+            browserHistory.push(destUrl);
+        };
+        setTimeout(() => {
+            console.log('Closing notification'); //eslint-disable-line no-console
+            notification.close();
+        }, 5000);
+    } catch (e) {
+        console.log('Error notification', e); //eslint-disable-line no-console
+        console.error(e); //eslint-disable-line no-console
+    }
+}
+
 export function notifyMe(title, body, channel) {
-    if (!('Notification' in window)) {
+    var destUrl = '';
+    var chanName = channel ? channel.name : '';
+    if (channel) {
+        destUrl = getTeamURLNoOriginFromAddressBar() + '/channels/' + chanName;
+    } else {
+        destUrl = TeamStore.getCurrentTeamUrl() + '/channels/town-square';
+    }
+
+    console.log('Notification for', title, body, chanName, destUrl); //eslint-disable-line no-console
+
+    if ('mmRuntime' in window && window.mmRuntime.directNotification) {
+        window.mmRuntime.directNotification(title, body, chanName, destUrl);
         return;
     }
 
-    if (Notification.permission === 'granted' || (Notification.permission === 'default' && !requestedNotificationPermission)) {
+    if (!('Notification' in window)) {
+        console.log('No notification available'); //eslint-disable-line no-console
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        sendNotification(title, body, destUrl);
+        return;
+    } else if (Notification.permission === 'default' && !requestedNotificationPermission) {
         requestedNotificationPermission = true;
 
+        console.log('Requesting permission'); //eslint-disable-line no-console
         Notification.requestPermission((permission) => {
+            console.log('Request result', permission); //eslint-disable-line no-console
             if (permission === 'granted') {
-                try {
-                    var notification = new Notification(title, {body: body, tag: body, icon: icon50});
-                    notification.onclick = () => {
-                        window.focus();
-                        if (channel) {
-                            browserHistory.push(getTeamURLNoOriginFromAddressBar() + '/channels/' + channel.name);
-                        } else {
-                            browserHistory.push(TeamStore.getCurrentTeamUrl() + '/channels/town-square');
-                        }
-                    };
-                    setTimeout(() => {
-                        notification.close();
-                    }, 5000);
-                } catch (e) {
-                    console.error(e); //eslint-disable-line no-console
-                }
+                sendNotification(title, body, destUrl);
             }
         });
     }

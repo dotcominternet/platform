@@ -77,6 +77,10 @@ export default class Sidebar extends React.Component {
             mentions += unreadCounts[chId].mentions;
         });
 
+        if ('mmRuntime' in window && window.mmRuntime.setUnreadCounts) {
+            window.mmRuntime.setUnreadCounts(msgs, mentions);
+        }
+
         return {msgs, mentions};
     }
     getStateFromStores() {
