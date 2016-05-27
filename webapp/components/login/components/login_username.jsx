@@ -83,6 +83,7 @@ export default class LoginUsername extends React.Component {
                             ref='username'
                             placeholder={Utils.localizeMessage('login_username.username', 'Username')}
                             spellCheck='false'
+                            autocapitalize='off'
                         />
                     </div>
                     <div className={'form-group' + errorClass}>

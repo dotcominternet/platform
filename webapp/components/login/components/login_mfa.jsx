@@ -62,6 +62,7 @@ export default class LoginMfa extends React.Component {
                             placeholder={Utils.localizeMessage('login_mfa.token', 'MFA Token')}
                             spellCheck='false'
                             autoComplete='off'
+                            autocapitalize='off'
                             autoFocus={true}
                         />
                     </div>
