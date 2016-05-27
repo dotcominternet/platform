@@ -61,6 +61,9 @@ export default class LoginLdap extends React.Component {
                     <div className={'form-group' + errorClass}>
                         <input
                             autoFocus={true}
+                            autoCapitalize='none'
+                            autoComplete='username'
+                            inputMode='email'
                             className='form-control'
                             ref='id'
                             placeholder={Utils.localizeMessage('login_ldap.username', 'LDAP Username')}
